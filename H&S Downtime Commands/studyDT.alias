@@ -31,35 +31,34 @@ sb = "+"+pargs.join('sb', '+') if pargs.get("sb") else ""
 eb = "+"+pargs.join('eb', '+') if pargs.get("eb") else ""
 ub = "+"+pargs.join('ub', '+') if pargs.get("ub") else ""
 
-#makes sure mastery points exist
-if me.cc_exists("Mastery Points") == False:
-    me.create_cc_nx("Mastery Points", 0, 50, None, None)  # makes sure they got a Mastery Points counter, like a good student
-    me.set_cc("Mastery Points", 0) #set new Mastery Points to 0
-
-#start output
 if me.cc_exists("Eminence") or me.cc_exists("Street Cred") or me.cc_exists("Community points"): #check for other faction
     returnstr += f' -f "Too Busy|{name} is too busy with other things to study"'
     repeat = 0
-
-#what level in the academy?
-if omastery >= 50:
-    returnstr += f' -f "Academy Mastery|{name} is a Grand Mage\n"'
-    endureCoin = "3d12"
-elif omastery >= 40:
-    returnstr += f' -f "Academy Mastery|{name} is a Magister\n"'
-    endureCoin = "2d12"
-elif omastery >= 30:
-    returnstr += f' -f "Academy Mastery|{name} is an Adept\n"'
-    endureCoin = "2d10"
-elif omastery >= 20:
-    returnstr += f' -f "Academy Mastery|{name} is a Mage\n"'
-    endureCoin = "2d8"
-elif omastery >= 10:
-    returnstr += f' -f "Academy Mastery|{name} is an Apprentice\n"'
-    endureCoin = "1d8"
 else:
-    returnstr += f' -f "Academy Mastery|{name} is an Initiate\n"'
-    endureCoin = "1d4"
+    #makes sure mastery points exist
+    if me.cc_exists("Mastery Points") == False:
+        me.create_cc_nx("Mastery Points", 0, 50, None, None)  # makes sure they got a Mastery Points counter, like a good student
+        me.set_cc("Mastery Points", 0) #set new Mastery Points to 0
+
+    #what level in the academy?
+    if omastery >= 50:
+        returnstr += f' -f "Academy Mastery|{name} is a Grand Mage\n"'
+        endureCoin = "3d12"
+    elif omastery >= 40:
+        returnstr += f' -f "Academy Mastery|{name} is a Magister\n"'
+        endureCoin = "2d12"
+    elif omastery >= 30:
+        returnstr += f' -f "Academy Mastery|{name} is an Adept\n"'
+        endureCoin = "2d10"
+    elif omastery >= 20:
+        returnstr += f' -f "Academy Mastery|{name} is a Mage\n"'
+        endureCoin = "2d8"
+    elif omastery >= 10:
+        returnstr += f' -f "Academy Mastery|{name} is an Apprentice\n"'
+        endureCoin = "1d8"
+    else:
+        returnstr += f' -f "Academy Mastery|{name} is an Initiate\n"'
+        endureCoin = "1d4"
 
 
 for i in range(repeat): #start loop
@@ -152,7 +151,7 @@ pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]
 pouch in bagsLoaded or bagsLoaded.append(pouch)
 me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
 
-returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Mastery Points: `{omastery}` -> `{omastery+masteryCount if omastery+masteryCount <=50 else 50}`\n- Experience (Not added automatically): `{totalExperience}`"'   
+returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Mastery Points: `{omastery}` -> `{omastery+masteryCount if omastery+masteryCount <=50 else 50}`\n- Bonus Experience (Not added automatically): `{totalExperience}`"'   
 return returnstr
 </drac2>
 -footer "!study [withhelp] [sadv] [eadv] [uadv] [-sb #] [-eb #] [-ub #] [-rr #] | Written by Stellumine#5554"
