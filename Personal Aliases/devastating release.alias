@@ -1,0 +1,64 @@
+!alias release embed
+<drac2>
+ch = character()
+com = combat()
+desc = get_gvar("13da1dc3-cd8b-44ad-931a-c41ecba2911e")
+args = &ARGS&
+comPeeps = com.combatants
+spiritLevel = 0
+i = 0
+targets = []
+D = ""
+F = ""
+damageTargets = []
+diceSize = "d6"
+
+while i < len(args):
+    if args[i] == "-level" or args[i] == "-l":
+        spiritLevel = args[i + 1]
+    elif args [i] == "-t" or args [i] == "-target":
+        targets.append(args[i+1])
+    i = i + 1
+
+diceSize= spiritLevel + diceSize
+damage = vroll(diceSize)
+total = damage.total
+
+for x in comPeeps:
+    for y in targets:
+        if y in x.name.lower() or y in x.name or y in x.name.upper():
+            damageTargets.append(x)
+            break
+
+D =f"**Spirit Level: **{spiritLevel}\n\n**Meta:**\n**Damage:** {damage.dice}[psychic] = {total}\n\n"
+for i in damageTargets:
+    totalDam = total
+    for x in i.resistances.resist:
+        if x.dtype.lower() == "psychic":
+            totalDam = total//2
+    for x in i.resistances.immune:
+        if x.dtype.lower() == "psychic":
+            totalDam = total * 0
+    for x in i.resistances.vuln:
+        if x.dtype.lower() == "psychic":
+            totalDam = total * 2
+    i.modify_hp(-totalDam)
+    D = D + f"**{i.name}**\n**Damage**: "
+    if totalDam == 0:
+        D = D + f"({damage.total}[psychic]) * 0 = {totalDam}\n\n"
+    elif totalDam > damage.total:
+        D = D + f"({damage.total}[psychic]) * 2 = {totalDam}\n\n"
+    elif totalDam < damage.total:
+        D = D + f"({damage.total}[psychic]) / 2 = {totalDam}\n\n"
+    else:
+        D = D + f"{damage.total}[psychic] = {totalDam}\n\n"
+    
+    F = F + f"{i}\n"
+
+#Prepare the output
+T = f"{ch.name} uses Devastating Release"
+D = D + desc
+</drac2>
+-title "{{T}}"
+-desc "{{D}}"
+-f "{{F}}"

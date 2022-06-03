@@ -1,0 +1,105 @@
+	
+
+tembed -title "{{name}} does acts of Vigilantism" {{pargs=&ARGS&}} -thumb <image> -color <color>
+<drac2>
+#Edited by Kirbyofdeath#7825
+#Start of defining variables
+pargs=argparse(pargs)
+
+coincount, brutalearn, heatCounter = 0, 0, 0
+returnstr, me, repeat, defroll, advroll, disroll, pas, fail, cpgain, cpadd, cptotal, cp= "", character(), int(pargs.get("rr")[0]) if pargs.get("rr") else 1, "1d20", "2d20kh1", "2d20kl1", "*PASS*", "*FAIL*", 0, 0, 0, "Community Points"
+mesk, sadv, cadv, dadv, dipadv, wildadv, fame, sidekick, prot, brutal= character().skills, True if pargs.get("sadv") else False, True if pargs.get("cadv") else False, True if pargs.get("dadv") else False, True if pargs.get("dipadv") else False, True if pargs.get("wildadv") else False, True if pargs.get("fame") else False, True if pargs.get("sidekick") else False, True if pargs.get("prot") else False, True if pargs.get("brutal") else False
+clone, dlone, slone = True if pargs.get("clone") else False, True if pargs.get("dlone") else False, True if pargs.get("slone") else False
+meint, mestr, medex, mechar, mewis, mepers, meste, medec, meath, meinv, meperc, mesurv, meintim = mesk.intelligence.value, mesk.strength.value, mesk.dexterity.value, mesk.charisma.value, mesk.wisdom.value, mesk.persuasion.value, mesk.stealth.value, mesk.deception.value, mesk.athletics.value, mesk.investigation.value, mesk.perception.value, mesk.survival.value, mesk.intimidation.value
+intim, intimint, intimwis, intimstr = meintim, ((meintim-mechar)+meint), ((meintim-mechar)+mewis), ((meintim-mechar)+mestr)
+brutalb, bb = "+"+str(max(intim,intimint,intimwis,intimstr)), "+"+pargs.get("bb")[0] if pargs.get("bb") else ""
+scoutb, sb = "+"+str(max(meinv,meperc)), "+"+pargs.get("sb")[0] if pargs.get("sb") else ""
+sd, si, sw = meste, ((meste-medex)+meint), ((meste-medex)+mewis)
+covertb, cb = "+"+str(max(sd,si,sw)), "+"+pargs.get("cb")[0] if pargs.get("cb") else ""
+atst, atde, pech, dech, pewi, dewi, pein, dein = meath, ((meath-mestr)+medex), mepers, medec, ((mepers-mechar)+mewis), ((medec-mechar)+mewis), ((mepers-mechar)+meint), ((medec-mechar)+meint)
+detainb, db = "+"+str(max(atst, atde, pech, dech, pewi, dewi, pein, dein)), "+"+pargs.get("db")[0] if pargs.get("db") else ""
+dc = ((level//2)+proficiencyBonus+10)
+protb = "+2" if prot else ""
+me.create_cc_nx("Heat", 0, None, None, None)  # makes sure they got a Heat counter, like a good criminal should
+me.create_cc_nx("Street Cred", 0, None, None, None)  # makes sure they got a Street Cred Counter
+me.create_cc_nx("Community Points", 0, None, None, None) # makes sure they have a Community Points Counter
+heatNum = me.get_cc("Heat")
+credNum = me.get_cc("Street Cred")
+checkdis1 = fame + sadv
+checkdis2 = fame + cadv
+checkdis3 = fame + dadv
+sl = "-3" if slone else ""
+dl = "-3" if dlone else ""
+cl = "-3" if clone else ""
+if heatNum >= 5:
+ return f' -f "You have to much Heat to do Vigilantism"'
+
+if  credNum > 0:
+ return f' -f "You have to much Cred to do Vigilantism"'
+returnstr += f' -f "**Vigilantism DC**:| {dc} (Rounded Down)\n"'
+for i in range(repeat):
+  scoutroll = vroll(defroll+scoutb+sb+protb+sl) if checkdis1 == 0 or checkdis1 == 2 else vroll(disroll+scoutb+sb+protb+sl) if fame == 1 else vroll(advroll+scoutb+sb+protb+sl)
+  covertroll = vroll(defroll+covertb+cb+protb+cl) if checkdis2 == 0 or checkdis2 == 2 else vroll(disroll+covertb+cb+protb+cl) if fame == 1 else vroll(advroll+covertb+cb+protb+cl)
+  detainroll = vroll(defroll+detainb+db+protb+dl) if checkdis3 == 0 or checkdis3 == 2 else vroll(disroll+detainb+db+protb+dl) if fame == 1 else vroll(advroll+detainb+db+protb+dl)
+  brutalroll = vroll(advroll+brutalb+bb)
+  brutalearn = brutalroll.total / 2
+  coincount += brutalearn
+  scoutPass, covertPass, detainPass = True if scoutroll.total >= dc else False, True if covertroll.total >= dc else False, True if detainroll.total >= dc else False
+  numPass = scoutPass + covertPass + detainPass
+  cpgain = 5 if numPass == 3 else 4 if numPass == 2 else 3 if numPass == 1 else 0
+  cpgain = cpgain * 2 if fame and numPass > 0 else cpgain
+  cpadd = cpgain
+  cptotal += cpadd
+  returnstr += f' -f "Attempt # {i+1}|**Scouting:** {scoutroll} , {pas if scoutPass else fail} {" **+25XP!**" if scoutPass and slone else ""} \n**Covert:** {covertroll}, {pas if covertPass else fail} {" **+25XP!**" if covertPass and clone else ""}\n**Detain:** {detainroll}, {pas if detainPass else fail} {" **+25XP!**" if detainPass and dlone else ""}\n'
+  returnstr += f' **You Gained Heat! +1**\n' if numPass == 0 and brutal and heatNum < 3 else ""
+  returnstr += f' Community Points + {cpgain} {"(Doubled by Fame)" if fame else ""}\n'
+  #Look for Chosen Path argument
+  returnstr += f'**Chosen Path:** '
+  if pargs.get("fame"):
+    returnstr += f'Path of the Famed Hero\nChecks are rolled at Dis with a chance to gain Double CP\n"'
+  elif pargs.get("sidekick"):
+    returnstr += f'Path of the Sidekick\n**+50XP Earned**"' if numPass == 3 else f'Path of the Sidekick\n**NO XP EARNED**\n"'
+  elif pargs.get("prot"):
+    returnstr += f'Path of the Protector\n**+2 added to all Checks!**\n"'
+  elif pargs.get("brutal"):
+    returnstr += f'Path of the Brutal\nYou have to much Heat to Roll.\n"' if heatNum >= 3 else f'Path of the Brutal\n**Intimidation Roll:** {brutalroll} You Earned {brutalearn} GP!\n"'
+  elif pargs.get("slone") or pargs.get("clone") or pargs.get("dlone"):
+    returnstr += f'Path of the Lone Wolf\n**-3** to '
+    returnstr += f'Scouting ' if slone else ""
+    returnstr += f'Covert ' if clone else ""
+    returnstr += f'Detain ' if dlone else ""
+    returnstr += f' **+25XP** for Passes on listed checks\n"' 
+  else:
+    returnstr += f'No Path Chosen\n"' 
+  if numPass == 0 and brutal and heatNum < 3:
+    me.mod_cc("Heat", +1)
+    heatCounter += 1
+  else:
+    ""
+
+
+#breaks down into gp sp and cp
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+if pargs.get("brutal") and heatNum < 3:
+ me.set_cvar("bags",dump_json(bagsLoaded)) #dumps the coins back to the cvar
+ # builds the final rollup field
+ returnstr += f' -f "Totals:|\n-Earnings: `{ogp}` -> `{coincount+ogp}` gp"'
+else:
+ returnstr += f''
+me.mod_cc(cp, +cptotal)
+returnstr += f' -f "Community Points|{me.get_cc(cp)} ({cptotal:+})\n"'
+returnstr += f' -f "Heat:| `{heatNum}` -> `{heatCounter+heatNum}`"' if brutal else ""
+return returnstr
+</drac2>
+-footer "!vigil [sadv] [cadv] [dadv] [-sb #] [-cb #] [-db #] [fame] [sidekick] [prot] [brutal] [-bb #] [slone] [clone] [dlone] | Written by Kirbyofdeath#7825(Rags)"

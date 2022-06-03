@@ -1,0 +1,158 @@
+tembed -title "{{name}} is studying at the Academy" -desc "Requires 2 Downtime Slots" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+#setting primamry variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+
+#setting rolls
+defroll, advroll, endureCoin = "1d20+","2d20kh1+",""
+
+#setting ccs and cc modding variables
+omastery = me.get_cc("Mastery Points") if me.cc_exists("Mastery Points") else 0
+masteryCount, passed, totalExperience, coincount, promoted = 0, 0, 0, 0, False
+
+#setting skills
+meconsave = me.saves.get("con").value
+meint, mewis, mecha, mearc, merel, menat, meins, mehis = me.skills.intelligence.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.arcana.value, me.skills.religion.value, me.skills.nature.value, me.skills.insight.value, me.skills.history.value
+mearcwis, mearccha = ((mearc-meint)+mewis), ((mearc-meint)+mecha)
+merelwis, merelcha = ((merel-meint)+mewis), ((merel-meint)+mecha)
+menatwis = ((menat-meint)+mewis)
+meinsint, meinscha = ((meins-mewis)+meint), ((meins-mewis)+mecha)
+mehiswis, mehischa = ((mehis-meint)+mewis), ((mehis-meint)+mecha)
+
+#setting bonuses
+studyBonus = str(max(mearc,mearcwis,mearccha,merel,merelcha,merelwis,menat,menatwis,meint,mewis,mecha))+"+"+str(meint)
+endureBonus = str(meconsave)
+understandBonus = str(max(meins,meinscha,meinsint,mehischa,mehis,mehiswis,mecha,mewis,meint))
+sb = "+"+pargs.join('sb', '+') if pargs.get("sb") else ""
+eb = "+"+pargs.join('eb', '+') if pargs.get("eb") else ""
+ub = "+"+pargs.join('ub', '+') if pargs.get("ub") else ""
+
+#makes sure mastery points exist
+if me.cc_exists("Mastery Points") == False:
+    me.create_cc_nx("Mastery Points", 0, 50, None, None)  # makes sure they got a Mastery Points counter, like a good student
+    me.set_cc("Mastery Points", 0) #set new Mastery Points to 0
+
+#start output
+if me.cc_exists("Eminence") or me.cc_exists("Street Cred") or me.cc_exists("Community points"): #check for other faction
+    returnstr += f' -f "Too Busy|{name} is too busy with other things to study"'
+    repeat = 0
+
+#what level in the academy?
+if omastery >= 50:
+    returnstr += f' -f "Academy Mastery|{name} is a Grand Mage\n"'
+    endureCoin = "3d12"
+elif omastery >= 40:
+    returnstr += f' -f "Academy Mastery|{name} is a Magister\n"'
+    endureCoin = "2d12"
+elif omastery >= 30:
+    returnstr += f' -f "Academy Mastery|{name} is an Adept\n"'
+    endureCoin = "2d10"
+elif omastery >= 20:
+    returnstr += f' -f "Academy Mastery|{name} is a Mage\n"'
+    endureCoin = "2d8"
+elif omastery >= 10:
+    returnstr += f' -f "Academy Mastery|{name} is an Apprentice\n"'
+    endureCoin = "1d8"
+else:
+    returnstr += f' -f "Academy Mastery|{name} is an Initiate\n"'
+    endureCoin = "1d4"
+
+
+for i in range(repeat): #start loop
+    gainedMastery = False
+
+    returnstr += f' -f "Attempt #{i+1}|'
+
+    #set up rolls
+    studyRoll = vroll(advroll+studyBonus+sb) if pargs.get("withhelp") or pargs.get("sadv") else vroll(defroll+studyBonus+sb)
+    endureRoll = vroll(advroll+endureBonus+eb) if pargs.get("withhelp") or pargs.get("eadv") else vroll(defroll+endureBonus+eb)
+    understandRoll = vroll(advroll+understandBonus+ub) if pargs.get("withhelp") or pargs.get("uadv") else vroll(defroll+understandBonus+ub)
+
+    #check if passed and output results
+    returnstr += f'**Study Check**: {studyRoll.full} '
+    if studyRoll.total >= 15:
+        returnstr += f'(**Passed**!)\n'
+        passed += 1
+    else:
+        returnstr += f'(**Fail**)\n'
+
+    returnstr += f'**Endurance Check**: {endureRoll.full} '
+    earnroll = vroll(endureCoin) #roll either way
+    if endureRoll.total >= 14:
+        returnstr += f'(**Passed**!)\n'
+    else:
+        returnstr += f'(**Fail**)\n'
+
+    returnstr += f'**Understanding Check**: {understandRoll.full} '
+    if understandRoll.total >= 15:
+        returnstr += f'(**Passed**!)\n'
+        passed += 1
+    else:
+        returnstr += f'(**Fail**)\n'
+
+    #logic of adding points
+    if passed >=2:
+        returnstr += f'You **passed** your Study and Understanding checks, you gain `1` Mastry Point!\n'
+        masteryCount += 1
+        gainedMastery = True if promoted == False else False
+        me.mod_cc("Mastery Points", +1)            
+    elif passed == 1:
+        returnstr += f'You **failed** one of your Study and Understanding checks, no Mastery Point today, but you gain **50**xp for your studies!\n'
+        totalExperience += 50
+    else:
+        returnstr += f'You **failed** both your Study and Understanding checks, try again tomorrow!\n'
+
+    #add coin earnings to output
+    returnstr += f'- Earnings: {earnroll.full}\n' if endureRoll.total >= 14 else f'- Earnings: NONE!'
+    coincount += earnroll.total if endureRoll.total >= 14 else 0
+
+    passed = 0
+    returnstr += f'"'
+
+    #did the character move up the academy
+    if gainedMastery:
+        if omastery+masteryCount >= 50:
+            returnstr += f' -f "Promoted|{name} is promoted to a Grand Mage\n"'
+            endureCoin = "3d12"
+            promoted = True
+        elif omastery+masteryCount >= 40:
+            returnstr += f' -f "Promoted|{name} is promoted to a Magister\n"'
+            endureCoin = "2d12"
+            promoted = True
+        elif omastery+masteryCount >= 30:
+            returnstr += f' -f "Promoted|{name} is promoted to an Adept\n"'
+            endureCoin = "2d10"
+            promoted = True
+        elif omastery+masteryCount >= 20:
+            returnstr += f' -f "Promoted|{name} is promoted to a Mage\n"'
+            endureCoin = "2d8"
+            promoted = True
+        elif omastery+masteryCount >= 10:
+            returnstr += f' -f "Promoted|{name} is promoted to an Apprentice\n"'
+            endureCoin = "1d8"
+            promoted = True
+
+# adds all the coins and puts in the good ol coin pouch
+#breaks down into gp sp and cp
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
+
+returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Mastery Points: `{omastery}` -> `{omastery+masteryCount if omastery+masteryCount <=50 else 50}`\n- Experience (Not added automatically): `{totalExperience}`"'   
+return returnstr
+</drac2>
+-footer "!study [withhelp] [sadv] [eadv] [uadv] [-sb #] [-eb #] [-ub #] [-rr #] | Written by Stellumine#5554"

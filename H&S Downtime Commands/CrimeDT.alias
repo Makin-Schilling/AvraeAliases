@@ -1,0 +1,369 @@
+tembed -title "{{name}} does various Crimes" -desc "Requires 2 Downtime Slots" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by MrRobinhood5#1999
+# Editted by Kirbyofdeath#7825
+# further modified by Stellumine#5554
+
+#sets primary variables
+pargs, returnstr, me, hasFeats, passRoll = argparse(&ARGS&),  f'', character(), False if not exists("feats") else True, "10"
+usingPassive, passiveAdv = True if pargs.get("passive") else False, "" if not pargs.get("iadv") \
+  else "+5[advantage]"
+isObservant = True if hasFeats and "Observant" in feats else False
+observantBonus = "" if not isObservant else "+5[observant]"
+#set path
+counter, enforcer, thief, hitman, spice, mob, legit, vols, low, = True if pargs.get("counter") else False, True if pargs.get("enforcer") else False, True if pargs.get("thief") else False, True if pargs.get("hitman") else False, True if pargs.get("spice") else False, True if pargs.get("mob") else False, True if pargs.get("legit") else False, True if pargs.get("vols") else False, True if pargs.get("low") else False
+#set all rolls
+defroll,advroll,ratgp,middlegp,modestgp,noblegp= "1d20+","2d20kh1+","1d4+1","1d6+10","1d8+30","1d10+100"
+#set all counters
+earnmod,coincount,totalCred,heatCounter,heatadd,repeat,heatReduce,totalXP,totalPassedVols,totalEm,hitmanshown = 0,0,0,0,0,int(pargs.get("rr")[0]) if pargs.get("rr") else 1, 0, 0, 0, 0,False
+#get current heat and credits
+if me.cc_exists("Heat") == False:
+    me.create_cc_nx("Heat", 0, 50, None, None)  # makes sure they got a Heat counter, like a good criminal should
+    me.mod_cc("Heat", -50) #set new heat to 0
+if me.cc_exists("Street Cred") == False:
+    me.create_cc_nx("Street Cred", 0, 50, None, None)  # makes sure they got a Street Cred Counter
+    me.mod_cc("Street Cred", -50) #set new street cred to 0
+if vols and me.cc_exists("Eminence") == False:
+    me.create_cc_nx("Eminence", 0, 50, None, None)  # makes sure they got a Eminence Counter
+    me.mod_cc("Eminence", -50) #set new eminence to 0
+oheat, ocred, oEm = me.get_cc("Heat"), me.get_cc("Street Cred"), me.get_cc("Eminence") if vols else 0
+# Now we build all the roll bonuses and the specified bonuses for [-ib] [-bb] [-sb]
+meint, medex, mestr, mewis, mecha, meste, meintim, meperf, meath, mepers= me.skills.intelligence.value, me.skills.dexterity.value, me.skills.strength.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.stealth.value, me.skills.intimidation.value, me.skills.performance.value, me.skills.athletics.value, me.skills.persuasion.value
+stewis, steint, intimstr = ((meste-medex)+mewis), ((meste-medex)+meint), ((meintim-mecha)+mestr)
+perfwis, perfint = ((meperf-mecha)+mewis), ((meperf-mecha)+meint)
+intelbonus = str(max(me.skills.investigation.value, me.skills.perception.value))
+blendingbonus = str(max(meste,stewis,steint,meintim,intimstr))
+shakebonus = str(max(me.skills.sleightOfHand.value, meperf, perfwis, perfint, meath))
+ib = "+"+pargs.join('ib', '+') if pargs.get("ib") else ""
+bb = "+"+pargs.join('bb', '+') if pargs.get("bb") else ""
+sb = "+"+pargs.join('sb', '+') if pargs.get("sb") else ""
+pb = "+"+pargs.join('pb', '+') if pargs.get("pb") else ""
+#builds the passive roll
+if usingPassive:
+  passRoll += "+"+intelbonus
+  passRoll += observantBonus if isObservant else ""
+  passRoll += passiveAdv if pargs.get("iadv") else ""
+#Threat Level Output
+threatLevelString=get("streetCred", "No streetCred cvar")
+if vols == False:
+    if "Quadruple Star Threat" in threatLevelString:
+        returnstr += f'-f "**Threat Level**:|Quadruple Star Threat\n"'
+        threatLevel = 4
+    elif totalCred+ocred >=50:
+        returnstr += f'-f "**Threat Level**:|Triple Star Threat\n"'
+        threatLevel = 3
+    elif totalCred+ocred >=24:
+        returnstr += f'-f "**Threat Level**:|Double Star Threat\n"'
+        threatLevel = 2
+    elif totalCred+ocred >= 12:
+        returnstr += f'-f "**Threat Level**:|One  Star Threat\n"'
+        threatLevel = 1
+    else:
+        threatLevel = 0
+
+# then we iterate through all the rolls number of times of rr, setting total
+for i in range(repeat):
+    if "Quadruple Star Threat" in threatLevelString:
+        threatLevel = 4
+    elif totalCred+ocred >=50:
+        threatLevel = 3
+    elif totalCred+ocred >=24:
+        threatLevel = 2
+    elif totalCred+ocred >= 12:
+        threatLevel = 1
+    else:
+        threatLevel = 0
+    heatReduce = 0
+    rerollHeat = oheat+heatCounter
+    hb = "+"+(5*threatLevel) if hitman==True else ""
+    #make all the rollstr
+    passintelroll = vroll(passRoll)
+    intelroll = vroll(advroll+intelbonus+ib+hb) if pargs.get("withhelp") or pargs.get("iadv") or mob else vroll(defroll+intelbonus+ib+hb)
+    intelroll = passintelroll if usingPassive else intelroll
+    blendingroll = vroll(advroll+blendingbonus+bb) if pargs.get("withhelp") or pargs.get("badv") or mob else vroll(defroll+blendingbonus+bb)
+    shakeroll = vroll(advroll+shakebonus+sb) if pargs.get("withhelp") or pargs.get("sadv") or mob else vroll(defroll+shakebonus+sb)
+    #what threat level is the criminal?
+    returnstr += f' -f "Attempt #{i+1}|'
+    #should be in jail/prison?
+    if me.cc_exists("Jail") or me.cc_exists("Prison"):
+        if me.get_cc("Heat") >= 50:
+            me.create_cc_nx("Prison", 0, 20, None, None) if mob == False else me.create_cc("Prison", 0, 10, None, None)
+            #me.set_cc("Prison", 20) if mob == False else me.set_cc("Prison", 10)
+            returnstr += f'\n**CAUGHT!** You\'re headed to Prison, you just couldn\'t lay low. \n Rerolls have stopped and you have a maxed prison counter. \nBe on your best behavior and you can leave with no issue. The guards have their eyes on you, there\'s no breaking out this time. \n{me.cc("Prison").full_str(True)}\n"'
+            break
+        elif me.get_cc("Heat") >= 25 and mob == False and hitman == False:
+            me.create_cc_nx("Prison", 0, 20, None, None)
+            #me.set_cc("Prison", 20)
+            returnstr += f'\n**CAUGHT!** You\'re headed to Prison, you just couldn\'t lay low. \n Rerolls have stopped and you have a maxed prison counter. \nBe on your best behavior and you can leave with no issue, or break out and the tags will have their eyes out for you. If you\'re a hitman you can do this DT in Prison up until 50 heat. ~~But you didn\'t hear it from me~~\n{me.cc("Prison").full_str(True)}\n"'
+            break
+        elif me.get_cc("Heat") >= 15 and mob == False and hitman == False:
+            me.create_cc_nx("Jail", 0, 7, None, None)
+            #me.set_cc("Jail", 7)
+            returnstr += f'\n**CAUGHT!** You\'re headed to jail. \n Rerolls have stopped and you have a maxed jail counter. \nBe on your best behavior and you can leave with no issue, or break out and the tags will have their eyes out for you. If you\'re a hitman you can do this DT in Prison up until 50 heat. ~~But you didn\'t hear it from me~~\n{me.cc("Jail").full_str(True)}\n"'
+            break
+    #define path
+    returnstr += f'**Chosen Path**: '
+    if legit:
+        returnstr += f'(Legit) '
+    if counter:
+        returnstr += f'Counterfeit'
+    elif enforcer:
+        returnstr += f'Enforcer'
+    elif thief:
+        returnstr += f'Thief'
+        ratgp,middlegp,modestgp,noblegp= "1d4+2","1d6+20","1d8+60","1d10+200"
+        threatLevel = threatLevel - 1 
+        if threatLevel < 0:
+            threatLevel = 0 
+    elif hitman:
+        returnstr += f'Hitman'
+    elif spice:
+        returnstr += f'Spice Dealer'
+        spiceroll = vroll(advroll+str(mepers)+pb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+str(mepers)+pb)
+    elif mob:
+        returnstr += f'Mob Boss'
+    elif vols:
+        returnstr += f'Volstrucker'
+    else:
+        returnstr += f'No Path'
+
+    if low:
+        heatReduce += 1
+        returnstr += f' (Laying Low)'
+    returnstr += f'\n'
+    #define what kinda victim you got
+    returnstr += f'**Intel**: {intelroll.full} '
+
+    if counter: #counterfeit path logic
+        numOnes = 0
+        if threatLevel == 1:
+            numOnes = numOnes - 1
+
+        if intelroll.total >= 21:
+            returnstr += f'(Noble)\n'
+            counterDice = "2d10*"+threatLevel+"+100"
+            countRoll = vroll(counterDice)
+            for i in countRoll.dice:
+                if i == '1':
+                    numOnes += 1
+            numOnes = numOnes - 2
+        elif intelroll.total >= 15:
+            returnstr += f'(Shopkeep)\n'
+            counterDice = "2d8*"+threatLevel+"+30"
+            countRoll = vroll(counterDice)
+            for i in countRoll.dice:
+                if i == '1':
+                    numOnes += 1
+        elif intelroll.total >= 10:
+            returnstr += f'(Middle Class)\n'
+            counterDice = "2d6*"+threatLevel+"+10"
+            countRoll = vroll(counterDice)
+            for i in countRoll.dice:
+                if i == '1':
+                    numOnes += 1
+            numOnes = numOnes - 1
+        else:
+            returnstr += f'(Street Rat)\n'
+            counterDice = "2d4*"+threatLevel+"+1"
+            countRoll = vroll(counterDice)
+            for i in countRoll.dice:
+                if i == '1':
+                    numOnes += 1
+            numOnes = numOnes - 1
+        earnroll = countRoll
+    else:
+        if intelroll.total >= 21:
+            returnstr += f'(Noble)'
+            earnroll = vroll(noblegp)
+        elif intelroll.total >= 15:
+            returnstr += f'(Shopkeep)'
+            earnroll = vroll(modestgp)
+        elif intelroll.total >= 10:
+            returnstr += f'(Middle Class)'
+            earnroll = vroll(middlegp)
+        else:
+            returnstr += f'(Street Rat)'
+            earnroll = vroll(ratgp)
+        if hitman and intelroll.total < 20: #hitman intel heat
+            returnstr += f' | Roll is less than 20, gain **{threatLevel}** heat'
+            heatCounter += threatLevel
+            me.mod_cc("Heat", +threatLevel)
+        returnstr += f'\n'
+    #define the useless second roll
+    returnstr += f'**Blending**: {blendingroll.full} '
+    if blendingroll.total >=21:
+        returnstr += f'(**Expertly hidden**, Possible Less Heat `-1`)'
+        heatReduce += 1
+    elif blendingroll.total >=15:
+        returnstr += f'(Very well hidden)'
+    elif blendingroll.total >=10:
+        returnstr += f'(Well hidden)'
+    else:
+        returnstr += f'(**Spotted**, Possible extra Heat `+1`)'
+    if blendingroll.total >=10 and vols:
+        totalPassedVols += 1
+    if hitman and blendingroll.total < 20: #hitman blending heat
+            returnstr += f' | Roll is less than 20, gain **{threatLevel}** heat'
+            heatCounter += threatLevel
+            me.mod_cc("Heat", +threatLevel)
+    returnstr += f'\n'
+    #define the earning mod roll
+    returnstr += f'**Shakedown**: {shakeroll.full} '
+    if shakeroll.total >= 21:
+        returnstr += f'(Perfect! **+100XP!**)'
+        totalXP += 100
+        earnmod = 1
+        if enforcer: #enforcer shakedown rerolls and heat gain
+            returnstr += f'\n'
+            i = 1
+            while i <= threatLevel:
+                shakerollEnforcer = vroll(advroll+shakebonus+sb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+shakebonus+sb)
+                returnstr += f'**Enforcer Shakedown #{i}**: {shakerollEnforcer.full} '
+                if shakerollEnforcer.total >= 16:
+                    returnstr += f'Pass! **+25 XP**\n'
+                    totalXP += 25
+                else:
+                    returnstr += f'Fail! **+1 Heat**\n'
+                    heatCounter += 1
+                    me.mod_cc("Heat", +1)
+                i += 1
+    elif shakeroll.total >= 10:
+        returnstr += f'(Success!)'
+        earnmod = 1
+    else:
+        earnmod = 0
+        if blendingroll.total >= 21:
+            returnstr += f'(**Caught**, take Heat ~~+1~~ `+0`)'
+            #No heat Gain due to Blending
+            returnstr += f'\n-Heat reduced by 1 from Blending roll.'
+            heatReduce = heatReduce - 1
+        elif blendingroll.total < 10:
+            returnstr += f'(**Caught**, take Heat ~~+1~~ `+2`)'
+            #Extra Heat gain due to Blending
+            returnstr += f'\n-Heat increase by 1 from Blending Roll.'
+            me.mod_cc("Heat", +2)
+            heatCounter += 2
+        else:
+            returnstr += f'(**Caught**, take Heat `+1`)'
+            me.mod_cc("Heat", +1)
+            heatCounter += 1
+    if hitman and shakeroll.total < 20: #hitman shakedown heat
+            returnstr += f' | Roll is less than 20, gain **{threatLevel} ** heat'
+            heatCounter += threatLevel
+            me.mod_cc("Heat", +threatLevel)
+    returnstr += f'\n'
+    if shakeroll.total >=10 and vols:
+        totalPassedVols += 1
+    #spice dealer persuasion and logic
+    if spice:
+        returnstr += f'**Move Product**: {spiceroll.full} '
+        if spiceroll.total >=15:
+            returnstr += f'(Got a sale, gain **50gp**)\n'
+            coincount += 50
+        else:
+            returnstr += f'(Got caught, gain **{threatLevel}** heat)\n'
+            heatCounter += threatLevel
+            me.mod_cc("Heat", threatLevel)
+    #Successful Crime, get the Cred
+    successCrime = True if shakeroll.total >= 10 else False
+    me.mod_cc("Street Cred", +1) if successCrime else 0
+    totalCred = totalCred +1 if successCrime else totalCred+0
+    #coins calculations for this attempt
+    coinearn = earnroll.total * (earnmod)
+    coincount += coinearn
+    if thief: #thief output and heat gain
+        returnstr += f'Gain Double the flat gold!\nGain {threatLevel} heat\n'
+        me.mod_cc("Heat", threatLevel)
+        heatCounter += threatLevel
+    if counter: #counterfeit output and heat gain
+        if successCrime:
+            returnstr += f'Rolling Double the coin dice. Gain heat on any 1. \nDice rolled are multiplied by threat level.\n**Ones Rolled**: {numOnes} (Heat Gained: +{numOnes})\n'
+            heatCounter += numOnes
+            me.mod_cc("Heat", +numOnes)
+        else:
+            returnstr += f'**Caught!** No Counterfeit coin\n'
+    if oheat+heatCounter > rerollHeat and legit == False:
+        roundHeat = (oheat+heatCounter) - rerollHeat
+        if heatReduce > 0:
+            heatCounter = heatCounter - heatReduce
+            roundHeat = roundHeat - heatReduce
+            if heatCounter < 0:
+                heatReduce = heatReduce - (0 - heatCounter)
+                heatCounter = 0
+            if low:
+                returnstr += f'**Laying Low**: '
+            returnstr += f'Your heat is reduced by {heatReduce}\n'
+            me.mod_cc("Heat", -heatReduce)
+        if enforcer and roundHeat>0: #enforcer output
+            returnstr += f'\nYou have gained **{roundHeat}** heat. \nIf you wish you can make a **DC18** attack or spell attack roll. If you succeed you will remove all heat, if you fail you gain +{threatLevel} extra\n\n'
+    returnstr += f'- Earnings: {earnroll.full}\n' if successCrime or totalPassedVols >= 2 else f'-Earnings: NONE!'
+    if vols:
+        returnstr += f'- Eminence: `1`' if totalPassedVols >= 2 else f''
+        totalEm += 1  if totalPassedVols >= 2 else 0
+        me.mod_cc("Eminence", +1) if totalPassedVols >= 2 else 0
+        totalPassedVols =0
+    else:
+        returnstr += f'- Street Cred: `1`' if successCrime else f''
+    returnstr += f'"\n'
+    if legit:
+        heatCounter = 0
+        heatToRemove = me.get_cc("Heat") - oheat
+        me.mod_cc("Heat", -heatToRemove)
+        returnstr += f'-f "Went Legit|No Heat Gained\n"'
+    if me.get_cc("Heat") >= 10 and me.get_cc("Heat") <= 14 and thief == False:
+        returnstr += f'-f "\n**BEWARE**:|Pay a fine equal to {me.get_cc("Heat")*50}gp or go to jail!\n\n"'
+    if heatCounter > 0:
+        if me.get_cc("Heat") >= 50:
+            me.create_cc_nx("Prison", 0, 20, None, None) if mob == False else me.create_cc("Prison", 0, 10, None, None)
+            me.set_cc("Prison", 20) if mob == False else me.set_cc("Prison", 10)
+            returnstr += f'-f "**CAUGHT!**|You\'re headed to Prison, you just couldn\'t lay low. \n Rerolls have stopped and you have a maxed prison counter. \nBe on your best behavior and you can leave with no issue. The guards have their eyes on you, there\'s no breaking out this time. \n{me.cc("Prison").full_str(True)}\n"'
+            break
+        elif me.get_cc("Heat") >= 25 and mob == False and hitmanshown == False:
+            hitmanshown = True
+            me.create_cc_nx("Prison", 0, 20, None, None)
+            me.set_cc("Prison", 20) if mob == False else me.set_cc("Prison", 10)
+            returnstr += f'-f "**CAUGHT!**|You\'re headed to Prison, you just couldn\'t lay low. \n Rerolls have stopped and you have a maxed prison counter. \nBe on your best behavior and you can leave with no issue, or break out and the tags will have their eyes out for you. If you\'re a hitman you can do this DT in Prison up until 50 heat. ~~But you didn\'t hear it from me~~\n{me.cc("Prison").full_str(True)}\n"'
+            if hitman == False:
+                break
+            elif hitman and me.cc_exists("Jail"):
+                me.delete_cc("Jail")
+        elif me.get_cc("Heat") >= 15 and mob == False and hitmanshown == False:
+            hitmanshown = True
+            me.create_cc_nx("Jail", 0, 7, None, None)
+            me.set_cc("Jail", 7)
+            returnstr += f'-f "**CAUGHT!**|You\'re headed to jail. \n Rerolls have stopped and you have a maxed jail counter. \nBe on your best behavior and you can leave with no issue, or break out and the tags will have their eyes out for you. If you\'re a hitman you can do this DT in Prison up until 50 heat. ~~But you didn\'t hear it from me~~\n{me.cc("Jail").full_str(True)}\n"'
+            if hitman == False:
+                break
+# adds all the coins and puts in the good ol coin pouch
+#breaks down into gp sp and cp
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
+# builds the final rollup field
+if vols == False:
+    returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Heat: `{oheat}` -> `{heatCounter+oheat if heatCounter+oheat <=50 else 50}`\n- Cred: `{ocred}` -> `{totalCred+ocred if totalCred+ocred <=50 else 50}`\n- Bonus Experience (Not added automatically): `{totalXP}`"'
+    if ocred < 12 and ocred+totalCred >= 12:
+        returnstr += f' -f "**Promoted**|You have been Promoted to One Star Threat!"'
+    if ocred < 24 and ocred+totalCred >= 24:
+        returnstr += f' -f "**Promoted**|You have been Promoted to Double Star Threat!"'
+    if ocred < 50 and ocred+totalCred >= 50:
+        returnstr += f' -f "**Promoted**|You have been Promoted to Triple Star Threat!"'
+else:
+    me.delete_cc("Heat")
+    me.delete_cc("Street Cred")
+    returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Eminence: `{oEm}` -> `{totalEm+oEm if totalEm+oEm <=50 else 50}`\n- Bonus Experience (Not added automatically): `{totalXP}`"'
+
+return returnstr
+</drac2>
+-footer "!crime [withhelp] [iadv] [badv] [sadv] [-ib #] [-bb #] [-sb #] [-rr #] [passive] [counter] [enforcer] [thief] [hitman] [spice] [-pb #] [padv] [mob] [legit] [vols] [low] | Written by Stellumine#5554"

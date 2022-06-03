@@ -1,0 +1,204 @@
+tembed -title "{{name}} is in Jail" -desc "Requires 2 Downtime Slots" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+#setting primamry variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+#setting chosen paths
+behave, breakout, prison, enforcer, spice, mob = True if pargs.get("behave") else False, True if pargs.get("break") else False, True if pargs.get("prison") else False, True if pargs.get("enforcer") else False, True if pargs.get("spice") else False, True if pargs.get("mob") else False
+#setting rolls
+defroll, advroll = "1d20+","2d20kh1+"
+#setting ccs
+oheat, ojail, oprison= me.get_cc("Heat") if me.cc_exists("Heat") else 0, me.get_cc("Jail") if me.cc_exists("Jail") else 0, me.get_cc("Prison") if me.cc_exists("Prison") else 0
+jailReduce, heatCounter, passedBreak, coincount = 0,0,0,0 
+#setting skills
+meint, mewis, mecha, mestr, medex, mepers, meinv, mehis, meste, mesur = me.skills.intelligence.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.strength.value, me.skills.dexterity.value, me.skills.persuasion.value, me.skills.investigation.value, me.skills.history.value, me.skills.stealth.value, me.skills.survival.value
+meperswis, mepersint = ((mepers-mecha)+mewis), ((mepers-mecha)+meint)
+meinvwis = ((meinv-meint)+mewis)
+mehiswis = ((mehis-meint)+mewis)
+mestewis, mesteint = ((meste-medex)+mewis), ((meste-medex)+meint)
+meath = me.skills.athletics.value
+mesurint = ((mesur-mewis)+meint)
+#set bonuses
+behaveBonus = str(max(mepers,mepersint,meperswis,meint,mewis,mecha))
+intelBonus = str(max(meinv,meinvwis,mehis,mehiswis,meint,mewis))
+escapeBonus = str(max(meste,mestewis,meath,medex,mewis,mestr))
+hideBonus = str(max(mesur,mesurint,meste,mesteint,mestewis,meint,mewis,medex))
+bb = "+"+pargs.join('bb', '+') if pargs.get("bb") else ""
+ib = "+"+pargs.join('ib', '+') if pargs.get("ib") else ""
+eb = "+"+pargs.join('eb', '+') if pargs.get("eb") else ""
+hb = "+"+pargs.join('hb', '+') if pargs.get("hb") else ""
+pb = "+"+pargs.join('pb', '+') if pargs.get("pb") else ""
+#set dcs
+behaveDC = 15 if prison else 10
+breakoutDC = 18 if prison else 12
+
+#make the ouput pretty
+returnstr += f' -f "Good Behavior|{name} is on their Best Behavior!"' if behave else f' -f "Jail Break!|{name} is trying to Break Out!"'
+if me.cc_exists("Jail") == False and me.cc_exists("Prison") == False:
+    returnstr += f' -f "{name} isn\'t in Jail or Prison|Shoo"'
+    repeat = 0
+elif me.cc_exists("Prison") == False and prison:
+    returnstr += f' -f "{name} isn\'t in Prison|Remove the `prison` subcommand from the command to interact with jail"'
+    repeat = 0
+elif me.cc_exists("Prison") and prison == False:
+    returnstr += f' -f "{name} isn\'t in Jail|Add the `prison` subcommand in your next command to interact with Prison"'
+    repeat = 0
+elif oheat >= 50 and behave == False:
+    returnstr += f' -f "{name} cannot escape|Add the `behave` subcommand in your next command to leave prison"'
+    repeat = 0
+elif mob and oheat < 50:
+    returnstr += f' -f "{name} is a Mob Boss|You don\'t need to use this command yet, wait until you\'re at 50 heat"'
+    repeat = 0
+#start the loop
+for i in range(repeat):
+    returnstr += f' -f "Attempt #{i+1}|'
+
+    if behave: #start rolling good behavior
+        behaveRoll = vroll(advroll+behaveBonus+bb) if pargs.get("withhelp") or pargs.get("badv") else vroll(defroll+behaveBonus+bb)
+        #behavior roll logic
+        returnstr += f'**Behavior Roll**: {behaveRoll.full} '
+        if behaveRoll.total >= behaveDC:
+            if enforcer: #enforcer good behavior
+                returnstr += f'(**Passed!** Lose `2` Prison Counter)\n' if prison else f'(**Passed!** Lose `2` Jail Counter)\n'
+                me.mod_cc("Prison", -2) if prison else me.mod_cc("Jail", -2)
+                jailReduce += 2
+            else: #everyone else
+                returnstr += f'(**Passed!** Lose `1` Prison Counter)\n' if prison else f'(**Passed!** Lose `1` Jail Counter)\n'
+                me.mod_cc("Prison", -1) if prison else me.mod_cc("Jail", -1)
+                jailReduce += 1
+        else:
+            returnstr += f'(**Failed!**)\n'
+
+        if spice and oheat+heatCounter < 25: #spice dealer roll
+            threatLevelString=get("streetCred", "No streetCred cvar")
+            totalCred = me.get_cc("Street Cred") if me.cc_exists("Street Cred") else 0
+            if "Quadruple Star Threat" in threatLevelString:
+                threatLevel = 4
+            elif totalCred >=50:
+                threatLevel = 3
+            elif totalCred >=24:
+                threatLevel = 2
+            elif totalCred >= 12:
+                threatLevel = 1
+            else:
+                threatLevel = 0
+            spiceroll = vroll(advroll+str(mepers)+pb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+str(mepers)+pb)
+            returnstr += f'**Move Product**: {spiceroll.full} '
+            if spiceroll.total >=15:
+                returnstr += f'(Got a sale, gain **50gp**)\n'
+                coincount += 50
+            else:
+                returnstr += f'(Got caught, gain **{threatLevel}** heat)\n'
+                heatCounter += threatLevel
+                me.mod_cc("Heat", +threatLevel)
+        elif spice and oheat+heatCounter >= 25:
+            returnstr += f'Your heat is too high to do this check. No spice for you.\n'
+
+        #are they free?
+        if prison and me.cc_exists("Prison") and me.get_cc("Prison") <=0:
+            returnstr += f'You are **Free to Go**. Your behavior within prison has allowed you to leave with no issue nor eyes upon you. Now go be a good citizen, or don\'t, your choice."'
+            me.set_cc("Heat", 0)
+            me.delete_cc("Prison")
+            break
+        elif me.cc_exists("Jail") and me.get_cc("Jail") <=0:
+            returnstr += f'You are **Free to Go**. Your behavior within jail has allowed you to leave with no issue nor eyes upon you. Now go be a good citizen, or don\'t, your choice."'
+            me.set_cc("Heat", 0)
+            me.delete_cc("Jail")
+            break
+    elif oheat+heatCounter < 50: #start rolling escape
+        intelRoll = vroll(advroll+intelBonus+ib) if pargs.get("withhelp") or pargs.get("iadv") else vroll(defroll+behaveBonus+ib)
+        escapeRoll = vroll(advroll+escapeBonus+eb) if pargs.get("withhelp") or pargs.get("eadv") else vroll(defroll+escapeBonus+eb)
+        hideRoll = vroll(advroll+hideBonus+hb) if pargs.get("withhelp") or pargs.get("hadv") else vroll(defroll+hideBonus+hb)
+
+        #intel check
+        returnstr += f'**Intel Roll**: {intelRoll.full} '
+        if intelRoll.total >= breakoutDC:
+            returnstr += f'(**Passed!**)\n'
+            passedBreak += 1
+        else:
+            returnstr += f'(**Failed!**)\n'
+
+        #escape check
+        returnstr += f'**Escape Roll**: {escapeRoll.full} '
+        if escapeRoll.total >= breakoutDC:
+            returnstr += f'(**Passed!**)\n'
+            passedBreak += 1
+        else:
+            returnstr += f'(**Failed!**)\n'
+
+        #hide check
+        returnstr += f'**Hide Roll**: {hideRoll.full} '
+        if hideRoll.total >= breakoutDC:
+            returnstr += f'(**Passed!**)\n'
+            passedBreak += 1
+        else:
+            returnstr += f'(**Failed!**)\n'
+        
+        #did they escape?
+        if passedBreak == 3:
+            returnstr += f'You **Escaped**!\nYou gain `5` extra heat and are on the run, but you are free to go back to your normal criminal activity. Be wary, because if you are caught again, you get sent back. And next time it might not be so easy to escape...'
+            heatCounter += 5
+            me.mod_cc("Heat", +5)
+            if me.cc_exists("Jail"):
+                me.delete_cc("Jail")
+            if me.cc_exists("Prison"):
+                me.delete_cc("Prison")
+            returnstr += f'"'
+            break
+        else:
+            returnstr += f'You have **Failed** to escape. Heat increases by `5`\n'
+            passedBreak = 0
+            heatCounter += 5
+            me.mod_cc("Heat", +5)
+    else: #heat too high, can't break out
+        if oheat <50:
+            returnstr += f'You\'re going further in, and this time there is no escape.\nYour Prison counter has reset to {me.get_cc_max("Prison")} \nAdd the word `behave` on the end of the command so you can leave prison'
+        else:
+            returnstr += f'You can\'t escape now, you\'re in too deep. \nAdd the word `behave` on the end of the command so you can leave prison'
+        returnstr += f'"'
+        break
+    if oheat+heatCounter >= 25 and prison==False: #upgrade and reset counters
+        returnstr += f'You gained too much heat and your sentence has reset.\nYour Jail counter has become a Prison counter and now you\'re in for more than twice as long. Couldn\'t just lay low.\nAdd `prison` onto the end of the command to try and escape or leave like a good citizen'
+        me.create_cc_nx("Prison", 0, 20, None, None) if mob == False else me.create_cc_nx("Prison", 0, 10, None, None)
+        me.set_cc("Prison", 20) if mob == False else me.set_cc("Prison", 10)
+        prison = True
+        oprison = me.get_cc("Prison")
+        if me.cc_exists("Jail"):
+            me.delete_cc("Jail")
+        jailReduce = 0
+        breakoutDC = 18
+        behaveDC = 15
+    returnstr += f'"'
+if behave:
+    if spice:
+        ngp = int(coincount)
+        nsp = (coincount - ngp)*10
+        ncp = int((nsp-int(nsp))*10)
+        nsp = int(nsp)
+        bagsLoaded=load_json(bags) #load the bags
+        # Error check for Coin Pouch
+        if "Coin Pouch" not in str(bagsLoaded):
+            return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
+        pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+        ogp = pouch[1]['gp'] # what gp was before?
+        pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+        pouch in bagsLoaded or bagsLoaded.append(pouch)
+        me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
+        if prison:
+            returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Prison: `{oprison}` -> `{oprison-jailReduce if oprison-jailReduce >=0 else 0}`\n- Heat: `{oheat}` -> '
+            returnstr += f'`{heatCounter+oheat if heatCounter+oheat <=50 else 50}`\n"' if me.get_cc("Prison") > 0 else  f'`{0 if oprison-jailReduce <=0 else oheat}`\n"'
+        else:
+            returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Jail: `{ojail}` -> `{ojail-jailReduce if ojail-jailReduce >=0 else 0}`\n- Heat: `{oheat}` -> '
+            returnstr += f'`{heatCounter+oheat if heatCounter+oheat <=50 else 50}`\n"' if me.get_cc("Jail") > 0 else  f'`{0 if ojail-jailReduce <=0 else oheat}`\n"'
+    elif prison: 
+        returnstr += f' -f "Totals:|\n- Prison: `{oprison}` -> `{oprison-jailReduce if oprison-jailReduce >=0 else 0}`\n- Heat: `{oheat}` -> `{0 if oprison-jailReduce <=0 else oheat}`"'
+    else: 
+        returnstr += f' -f "Totals:|\n- Jail: `{ojail}` -> `{ojail-jailReduce if ojail-jailReduce >=0 else 0}`\n- Heat: `{oheat}` -> `{0 if ojail-jailReduce <=0 else oheat}`"'
+else:
+    returnstr += f' -f "Total:|\n- Heat: `{oheat}` -> `{heatCounter+oheat if heatCounter+oheat <=50 else 50}`"'
+return returnstr
+</drac2>
+-footer "!jail [withhelp] [badv] [iadv] [eadv] [hadv] [-bb #] [-ib #] [-eb #] [-hb #] [-rr #] [behave] [prison] [enforcer] [mob] [spice] [padv] [-pb #] | Written by Stellumine#5554"

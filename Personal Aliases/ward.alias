@@ -1,0 +1,62 @@
+embed
+<drac2>
+#Define variables for later use
+cc = "Telekinetic Ward"
+cc2 = "Ki Points"
+rest = "You cannot use this feature again until you finish a long rest."
+noCC = "You do not have this ability."
+ch=character()
+desc = f"You have learned to shape the field of Aether into armor, to grant you protection and bolster your strength. You can as an action create this ward (appearance and color of your choice), your ward has a number of hit points equal to (twice your monk level + your wisdom modifier). Whenever you take damage, the ward takes the damage instead. If this damage reduces the ward to 0 hit points, you take any remaining damage. While the ward has 0 hit points, it can't absorb damage, but its power remains. You can as a bonus action, expend a ki point to replenish a number of hit points equal to your martial arts die + wisdom modifier (1 ki point replenishing one roll of your martial arts die and etc). Once you create the ward, you can't create it again until you finish a long rest.\n"
+arguments = &ARGS&
+succ = ""
+
+#Logic of the alias. Check for all the necessary conditions
+if len(arguments) > 0:
+    if arguments[0] == "heal" and ch.cc_exists(cc2) and ch.get_cc(cc2):
+        diceRoll = ""
+        monkLevels = ch.levels.get("Monk")
+        succ="heals their" 
+        if monkLevels < 5:
+            diceRoll = "1d4"
+        elif monkLevels >4 and monkLevels < 11:
+            diceRoll = "1d6"
+        elif monkLevels >10 and monkLevels < 17:
+            diceRoll = "1d8"
+        else:
+            diceRoll = "1d10"
+        wardHealing = roll(diceRoll)
+        D = f"**Rolling**: {diceRoll} ({wardHealing})\n{name} spends 1 Ki Point and heals their ward by **{wardHealing}**+{wisdomMod}!"
+        totalHealing = wardHealing+wisdomMod
+        ch.mod_cc(cc2, -1)
+        maxWard = ch.levels.get("Monk")*2 + wisdomMod
+        currentWard = ch.temp_hp
+        if currentWard+totalHealing > maxWard:
+            temp = maxWard - (currentWard + totalHealing) 
+            totalHealing = totalHealing + temp
+        ch.set_temp_hp(totalHealing+currentWard)
+        D = D + f"\n\n**{name}'s HP** = {ch.hp}/{ch.max_hp}\n**{name}'s Ward** = {ch.temp_hp}/{maxWard} (+{totalHealing})"
+        
+    elif ch.cc_exists(cc2):
+        D = "You cannot use this feature again until you finish a long rest."
+    else:
+        D = noCC
+    F = f"{cc2}|{ch.cc_str(cc2) if ch.cc_exists(cc2) else '*None*'}(-1)"
+else:
+    succ = "tries to use"
+    if ch.cc_exists(cc) and ch.get_cc(cc):
+        succ = "uses"
+        wardSize = ch.levels.get("Monk")*2 + wisdomMod
+        ch.set_temp_hp(wardSize)
+        D = desc + f"\n**Ward HP** = {wardSize}\n\n**{name}'s HP** = {ch.hp}/{ch.max_hp}\n**{name}'s Ward** = {ch.temp_hp}/{wardSize}"
+        ch.mod_cc(cc, -1)
+    elif ch.cc_exists(cc):
+        D = rest
+    else:
+        D = noCC
+    F = f"{cc}|{ch.cc_str(cc) if ch.cc_exists(cc) else '*None*'}(-1)"
+#Prepare the output
+T = f"{name} {succ} {cc}!"
+</drac2>
+-title "{{T}}"
+-desc "{{D}}"
+-f "{{F}}"
