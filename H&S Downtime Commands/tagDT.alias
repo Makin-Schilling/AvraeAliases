@@ -1,0 +1,135 @@
+tembed -title "{{name}} Crime Fights" {{pargs=&ARGS&}} -thumb <image> -color <color>
+<drac2>
+# Written By: MrRobinhood5#1999
+# Adjusted By: Kirbyofdeath#7825
+
+# Variables for Rank up if enough Eminence is gained
+err_str = ' not found in Server Config. Contact a Dragonspeaker.'
+config = load_json(get_svar('eminenceConfig', '{}'))
+err('Server configuration Error with SVAR. Contact a Dragonspeaker') if not config else None
+ranksGvar = load_json(get_gvar(config.get('gvar')))
+rankUp = config.get('rankUp')
+rankDown = config.get('rankDown')
+cvarName = config.get('cvarName')
+ccName = config.get('ccName')
+rank_name = config.get('rankName')
+#Start of defining variables
+pargs=argparse(pargs)
+
+coincount, comearning = 0 , 0
+returnstr, me, repeat, defroll, advroll, pas, fail, emgain, em= "", character(), int(pargs.get("rr")[0]) if pargs.get("rr") else 1, "1d20", "2d20kh1", "*PASS*", "*FAIL*", 0, "Eminence"
+mesk, sadv, cadv, dadv, dipadv, wildadv = character().skills, True if pargs.get("sadv") else False, True if pargs.get("cadv") else False, True if pargs.get("dadv") else False, True if pargs.get("dipadv") else False, True if pargs.get("wildadv") else False
+meint, mestr, medex, mechar, mewis, mepers, meste, medec, meath, meinv, meperc, mesurv= mesk.intelligence.value, mesk.strength.value, mesk.dexterity.value, mesk.charisma.value, mesk.wisdom.value, mesk.persuasion.value, mesk.stealth.value, mesk.deception.value, mesk.athletics.value, mesk.investigation.value, mesk.perception.value, mesk.survival.value
+scoutb, sb = "+"+str(max(meinv,meperc)), "+"+pargs.get("sb")[0] if pargs.get("sb") else ""
+sd, si, sw = meste, ((meste-medex)+meint), ((meste-medex)+mewis)
+covertb, cb = "+"+str(max(sd,si,sw)), "+"+pargs.get("cb")[0] if pargs.get("cb") else ""
+atst, atde, pech, dech, pewi, dewi, pein, dein = meath, ((meath-mestr)+medex), mepers, medec, ((mepers-mechar)+mewis), ((medec-mechar)+mewis), ((mepers-mechar)+meint), ((medec-mechar)+meint)
+detainb, db = "+"+str(max(atst, atde, pech, dech, pewi, dewi, pein, dein)), "+"+pargs.get("db")[0] if pargs.get("db") else ""
+commb = "+"+str(max(pech, pewi, pein))
+wildb = "+"+str(mesurv)
+#Create CC Eminence
+me.create_cc_nx("Eminence", 0, None, None, None) # makes sure they have a Community Points Counter
+
+for i in range(repeat):
+  scoutroll, covertroll, detainroll, commroll, wildroll, investroll = vroll(advroll+scoutb+sb) if sadv else vroll(defroll+scoutb+sb), vroll(advroll+covertb+cb) if cadv else vroll(defroll+covertb+cb), vroll(advroll+detainb+db) if dadv else vroll(defroll+detainb+db), vroll(advroll+commb) if dipadv else vroll(defroll+commb), vroll(advroll+wildb) if wildadv else vroll(defroll+wildb), vroll(advroll+scoutb) if sadv else vroll(defroll+scoutb)
+  scoutPass, scoutadd, covertPass, detainPass = True if scoutroll.total >= 0 else False, True if scoutroll.total >= 20 else False, True if covertroll.total >= 15 else False, True if detainroll.total >= 15 else False
+  oneEm = True if scoutPass and covertPass and detainPass else False
+  twoEm = True if scoutadd and covertPass and detainPass else False
+  monCR = True if scoutroll.total >=20 and covertroll.total >= 20 and detainroll.total >=20 and wildroll.total >= 20 else False
+  emgain += 2 if twoEm else 1 if oneEm else 0
+  
+  comearning = commroll.total / 2
+  coincount += comearning
+  returnstr += f' -f "Attempt # {i+1}|**Scouting:** {scoutroll} '
+  if scoutroll.total >= 20:
+    returnstr += f'(Two Star Criminal)\n'
+  elif scoutroll.total >= 15:
+    returnstr += f'(One Star Criminal)\n'
+  elif scoutroll.total >= 10:
+    returnstr += f'(Average Criminal)\n'
+  else:
+    returnstr += f'(Low Life Criminal)\n'
+
+  returnstr += f'**Covert:** {covertroll} '
+  if covertroll.total >= 20:
+    returnstr += f'(Professional Stalker)\n'
+  elif covertroll.total >= 15:
+    returnstr += f'(Successfully Stalked)\n'
+  elif covertroll.total >= 10:
+    returnstr += f'(Last Second Spotted)\n'
+  else:
+    returnstr += f'(Easily Spotted)\n'
+
+  returnstr += f'**Detain:** {detainroll} '
+  if detainroll.total >= 20:
+    returnstr += f'(Easy Cuff and Grab) **+100XP**\n'
+  elif detainroll.total >= 15:
+    returnstr += f'(Nice Pursuit)\n'
+  elif detainroll.total >= 10:
+    returnstr += f'(Got Juked)\n'
+  else:
+    returnstr += f'(Butterfingers)\n'
+
+  returnstr += f'\n{"Eminence +2" if twoEm else "Eminence +1" if oneEm else "**FAILED** to Catch"}\n'
+  
+  #Look for Chosen Path argument
+  returnstr += f'**Chosen Path:** '
+  if pargs.get("invest"):
+    returnstr += f'Private Investigator\nPatrol Roll: {investroll}\n"'
+  elif pargs.get("diplo"):
+    returnstr += f'Adventurer Diplomat\nPersuasion Roll: {commroll} You Earned {comearning} GP!\n"'
+  elif pargs.get("wild"):
+    returnstr += f'Wildlife Protector\nSurvival Roll: {wildroll} {"CR5 Monster Part succesfully Confiscated" if monCR else "Monster Part missed"}\n"'
+  else:
+    returnstr += f'No Path Chosen\n"'
+
+me.mod_cc(em, +emgain)
+returnstr += f' -f "Eminence|{me.get_cc(em)} ({emgain:+})\n "'
+#breaks down into gp sp and cp
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+if pargs.get("diplo"):
+ me.set_cvar("bags",dump_json(bagsLoaded)) #dumps the coins back to the cvar
+ # builds the final rollup field
+ returnstr += f' -f "Totals:|\n-Earnings: `{ogp}` -> `{coincount+ogp}` gp"'
+
+ch=character()
+# Actual Code
+ch.create_cc_nx(ccName, 0)
+oldCvar = load_json(get(cvarName, dump_json(ranksGvar[0])))
+# Add/Remove Points
+level_change = False
+if emgain > 0:
+    # Add points to CC
+    old_value = ch.get_cc(ccName)
+    new_value = ch.mod_cc(ccName, emgain)
+    # Check to see if we leveled up
+    check_level_up = [rank for rank in ranksGvar if new_value >= rank.value]
+    check_level_down = True if oldCvar.value > new_value else False
+    if check_level_up:
+        level_change = True
+        new_cvar = check_level_up[-1]
+        ch.set_cvar(cvarName, dump_json(new_cvar))
+current_cvar = load_json(get(cvarName, dump_json(ranksGvar[0])))
+# Promoted/Demoted?
+if level_change:
+    # Promoted
+    if ranksGvar.index(new_cvar) > ranksGvar.index(oldCvar):
+        returnstr += f' -f "{rankUp}|You have been {rankUp} to {current_cvar.name}\n "'
+    # Demoted
+    elif ranksGvar.index(new_cvar) < ranksGvar.index(oldCvar):
+        returnstr += f' -f "{rankDown}|You have been {rankDown} to {current_cvar.name}\n "'
+
+return returnstr
+</drac2>
+-footer "!tag [sadv] [cadv] [dadv] [-sb #] [-cb #] [-db #] [invest] [diplo] [dipadv] [wild] [wildadv] [-rr #] | XP is added manually | Written by Kirbyofdeath#7825(Rags)"
