@@ -16,12 +16,15 @@ rank_name = config.get('rankName')
 #Start of defining variables
 pargs=argparse(pargs)
 
+totalExperience = 0
+
 coincount, comearning = 0 , 0
 returnstr, me, repeat, defroll, advroll, pas, fail, emgain, em= "", character(), int(pargs.get("rr")[0]) if pargs.get("rr") else 1, "1d20", "2d20kh1", "*PASS*", "*FAIL*", 0, "Eminence"
-mesk, sadv, cadv, dadv, dipadv, wildadv = character().skills, True if pargs.get("sadv") else False, True if pargs.get("cadv") else False, True if pargs.get("dadv") else False, True if pargs.get("dipadv") else False, True if pargs.get("wildadv") else False
-meint, mestr, medex, mechar, mewis, mepers, meste, medec, meath, meinv, meperc, mesurv= mesk.intelligence.value, mesk.strength.value, mesk.dexterity.value, mesk.charisma.value, mesk.wisdom.value, mesk.persuasion.value, mesk.stealth.value, mesk.deception.value, mesk.athletics.value, mesk.investigation.value, mesk.perception.value, mesk.survival.value
+mesk, sadv, cadv, dadv, dipadv, wildadv, tadv = character().skills, True if pargs.get("sadv") else False, True if pargs.get("cadv") else False, True if pargs.get("dadv") else False, True if pargs.get("dipadv") else False, True if pargs.get("wildadv") else False, True if pargs.get("tadv") else False
+meint, mestr, medex, mechar, mewis, mepers, meste, medec, meath, meinv, meperc, mesurv, meintim= mesk.intelligence.value, mesk.strength.value, mesk.dexterity.value, mesk.charisma.value, mesk.wisdom.value, mesk.persuasion.value, mesk.stealth.value, mesk.deception.value, mesk.athletics.value, mesk.investigation.value, mesk.perception.value, mesk.survival.value, mesk.intimidation.value
 scoutb, sb = "+"+str(max(meinv,meperc)), "+"+pargs.get("sb")[0] if pargs.get("sb") else ""
 sd, si, sw = meste, ((meste-medex)+meint), ((meste-medex)+mewis)
+ic, ist, iw = meintim, ((meintim-mechar)+mestr), ((meintim-mechar)+mewis)
 covertb, cb = "+"+str(max(sd,si,sw)), "+"+pargs.get("cb")[0] if pargs.get("cb") else ""
 atst, atde, pech, dech, pewi, dewi, pein, dein = meath, ((meath-mestr)+medex), mepers, medec, ((mepers-mechar)+mewis), ((medec-mechar)+mewis), ((mepers-mechar)+meint), ((medec-mechar)+meint)
 detainb, db = "+"+str(max(atst, atde, pech, dech, pewi, dewi, pein, dein)), "+"+pargs.get("db")[0] if pargs.get("db") else ""
@@ -31,7 +34,13 @@ wildb = "+"+str(mesurv)
 me.create_cc_nx("Eminence", 0, None, None, None) # makes sure they have a Community Points Counter
 
 for i in range(repeat):
+  if pargs.get("trooper"):
+    intimb, tb = "+"+str(max(ic,ist,iw)), "+"+pargs.get("tb")[0] if pargs.get("tb") else ""
+    intimRoll = vroll(advroll+intimb+tb) if tadv else vroll(defroll+intimb+tb)
+
   scoutroll, covertroll, detainroll, commroll, wildroll, investroll = vroll(advroll+scoutb+sb) if sadv else vroll(defroll+scoutb+sb), vroll(advroll+covertb+cb) if cadv else vroll(defroll+covertb+cb), vroll(advroll+detainb+db) if dadv else vroll(defroll+detainb+db), vroll(advroll+commb) if dipadv else vroll(defroll+commb), vroll(advroll+wildb) if wildadv else vroll(defroll+wildb), vroll(advroll+scoutb) if sadv else vroll(defroll+scoutb)
+  if pargs.get("trooper"):
+    covertroll = intimRoll
   scoutPass, scoutadd, covertPass, detainPass = True if scoutroll.total >= 0 else False, True if scoutroll.total >= 20 else False, True if covertroll.total >= 15 else False, True if detainroll.total >= 15 else False
   oneEm = True if scoutPass and covertPass and detainPass else False
   twoEm = True if scoutadd and covertPass and detainPass else False
@@ -49,12 +58,23 @@ for i in range(repeat):
     returnstr += f'(Average Criminal)\n'
   else:
     returnstr += f'(Low Life Criminal)\n'
-
-  returnstr += f'**Covert:** {covertroll} '
+  
+  if pargs.get("trooper"):
+    returnstr += f'**Trooper Intimidation:** {covertroll} '
+  else:
+    returnstr += f'**Covert:** {covertroll} '
   if covertroll.total >= 20:
-    returnstr += f'(Professional Stalker)\n'
+    returnstr += f'(Professional Stalker)'
+    if pargs.get("trooper"):
+      returnstr += f'(You gain **100** extra XP!)'
+      totalExperience += 100
+    returnstr += f'\n'
   elif covertroll.total >= 15:
-    returnstr += f'(Successfully Stalked)\n'
+    returnstr += f'(Successfully Stalked)'
+    if pargs.get("trooper"):
+      returnstr += f'(You gain **100** extra XP!)'
+      totalExperience += 100
+    returnstr += f'\n'
   elif covertroll.total >= 10:
     returnstr += f'(Last Second Spotted)\n'
   else:
@@ -63,6 +83,7 @@ for i in range(repeat):
   returnstr += f'**Detain:** {detainroll} '
   if detainroll.total >= 20:
     returnstr += f'(Easy Cuff and Grab) **+100XP**\n'
+    totalExperience += 100
   elif detainroll.total >= 15:
     returnstr += f'(Nice Pursuit)\n'
   elif detainroll.total >= 10:
@@ -80,11 +101,13 @@ for i in range(repeat):
     returnstr += f'Adventurer Diplomat\nPersuasion Roll: {commroll} You Earned {comearning} GP!\n"'
   elif pargs.get("wild"):
     returnstr += f'Wildlife Protector\nSurvival Roll: {wildroll} {"CR5 Monster Part succesfully Confiscated" if monCR else "Monster Part missed"}\n"'
+  elif pargs.get("trooper"):
+    returnstr += f'City Trooper\n"'
   else:
     returnstr += f'No Path Chosen\n"'
 
 me.mod_cc(em, +emgain)
-returnstr += f' -f "Eminence|{me.get_cc(em)} ({emgain:+})\n "'
+returnstr += f' -f "Totals|- Eminence: {me.get_cc(em)} ({emgain:+})\n- Bonus Experience (Not added automatically): `{totalExperience}`"'
 #breaks down into gp sp and cp
 ngp = int(coincount)
 nsp = (coincount - ngp)*10
@@ -101,7 +124,7 @@ pouch in bagsLoaded or bagsLoaded.append(pouch)
 if pargs.get("diplo"):
  me.set_cvar("bags",dump_json(bagsLoaded)) #dumps the coins back to the cvar
  # builds the final rollup field
- returnstr += f' -f "Totals:|\n-Earnings: `{ogp}` -> `{coincount+ogp}` gp"'
+ returnstr += f' -f "Diplo:|\n-Earnings: `{ogp}` -> `{coincount+ogp}` gp"'
 
 ch=character()
 # Actual Code
@@ -132,4 +155,4 @@ if level_change:
 
 return returnstr
 </drac2>
--footer "!tag [sadv] [cadv] [dadv] [-sb #] [-cb #] [-db #] [invest] [diplo] [dipadv] [wild] [wildadv] [-rr #] | XP is added manually | Written by Kirbyofdeath#7825(Rags)"
+-footer "!tag [sadv] [cadv] [dadv] [-sb #] [-cb #] [-db #] [invest] [diplo] [dipadv] [wild] [wildadv] [trooper] [tadv] [-tb #] [-rr #] | XP is added manually | Written by Kirbyofdeath#7825(Rags)"
