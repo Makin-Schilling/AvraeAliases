@@ -99,11 +99,9 @@ for i in range(repeat): #start loop
         masteryCount += 1
         gainedMastery = True if promoted == False else False
         me.mod_cc("Mastery Points", +1)            
-    elif passed == 1:
-        returnstr += f'You **failed** one of your Study and Understanding checks, no Mastery Point today, but you gain **50**xp for your studies!\n'
-        totalExperience += 50
     else:
-        returnstr += f'You **failed** both your Study and Understanding checks, try again tomorrow!\n'
+        returnstr += f'You **failed** one or more of your Study and Understanding checks, no Mastery Point today, but you gain **50**xp for your studies!\n'
+        totalExperience += 50
 
     #add coin earnings to output
     returnstr += f'- Earnings: {earnroll.full}\n' if endureRoll.total >= 14 else f'- Earnings: NONE!'
