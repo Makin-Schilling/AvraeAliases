@@ -1,0 +1,79 @@
+tembed -title "**Work DT**" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+
+# Setting Modding Variables
+coincount = 0
+
+# Setting Rolls
+defroll, advroll, disroll, realRoll = "1d20+","2d20kh1+", "2d20kl1+", ""
+
+# Setting Skills
+meint, mewis, meperf = me.skills.intelligence.value, me.skills.wisdom.value, me.skills.performance.value
+
+# Setting Skill Bonuses
+workBonus = str(max(meint, mewis, meperf))
+b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+
+# Start Making Output Pretty
+returnstr += f'-desc "For working and maintaining a profession you can either make an intelligence, wisdom or performance check and your earnings are determined on the roll.\n ◽ 9 or lower: 1 gp\n ◽ 10-14: 7gp\n ◽ 15-20: 14gp\n ◽ 21+: 39gp"'
+
+# Start Reroll loop
+for i in range(repeat):
+    # Start Loop Output
+    returnstr += f' -f "Roll #{i+1}|'
+
+    # Set up Work Roll
+    if pargs.get("adv"):
+        realRoll = advroll
+    elif pargs.get("dis"):
+        realRoll = disroll
+    else:
+        realRoll = defroll
+    workRoll = vroll(realRoll+workBonus+b)
+
+    # Check Passes and Output Results
+    returnstr += f'{workRoll.full}\n'
+    if workRoll.total >= 21:
+        returnstr += f'Coins Gained: `39` gp'
+        coincount += 39
+    elif workRoll.total >= 15:
+        returnstr += f'Coins Gained: `14` gp'
+        coincount += 14
+    elif workRoll.total >= 10:
+        returnstr += f'Coins Gained: `7` gp'
+        coincount += 7
+    else:
+        returnstr += f'Coins Gained: `1` gp'
+        coincount += 1
+
+    returnstr += f'"'
+
+# adds all the coins and puts in the good ol coin pouch (Just Copy and Paste This)
+# breaks down into gp sp and cp
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
+
+# Prepare Final Output
+returnstr += f' -f "Total Coin Earned|`{coincount}`"'
+returnstr += f' -f "Earnings, Added Automatically|`{ogp}` -> `{coincount+ogp}` gp"'
+
+return returnstr
+</drac2>
+-footer "!dt work [adv] [dis] [-b #] [-rr #] | Written by Stellumine#5554"
