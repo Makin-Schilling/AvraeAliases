@@ -32,6 +32,7 @@ oheat, ocred, oEm = me.get_cc("Heat"), me.get_cc("Street Cred"), me.get_cc("Emin
 meint, medex, mestr, mewis, mecha, meste, meintim, meperf, meath, mepers= me.skills.intelligence.value, me.skills.dexterity.value, me.skills.strength.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.stealth.value, me.skills.intimidation.value, me.skills.performance.value, me.skills.athletics.value, me.skills.persuasion.value
 stewis, steint, intimstr = ((meste-medex)+mewis), ((meste-medex)+meint), ((meintim-mecha)+mestr)
 perfwis, perfint = ((meperf-mecha)+mewis), ((meperf-mecha)+meint)
+perswis, persint = ((mepers-mecha)+mewis), ((mepers-mecha)+meint)
 intelbonus = str(max(me.skills.investigation.value, me.skills.perception.value))
 blendingbonus = str(max(meste,stewis,steint,meintim,intimstr))
 shakebonus = str(max(me.skills.sleightOfHand.value, meperf, perfwis, perfint, meath))
@@ -120,7 +121,8 @@ for i in range(repeat):
         returnstr += f'Hitman'
     elif spice:
         returnstr += f'Spice Dealer'
-        spiceroll = vroll(advroll+str(mepers)+pb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+str(mepers)+pb)
+        spiceBonus = str(max(mepers,perswis,persint))
+        spiceroll = vroll(advroll+spiceBonus+pb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+spiceBonus+pb)
     elif mob:
         returnstr += f'Mob Boss'
     elif vols:
