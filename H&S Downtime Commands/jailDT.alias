@@ -14,7 +14,7 @@ defroll, advroll = "1d20+","2d20kh1+"
 oheat, ojail, oprison= me.get_cc("Heat") if me.cc_exists("Heat") else 0, me.get_cc("Jail") if me.cc_exists("Jail") else 0, me.get_cc("Prison") if me.cc_exists("Prison") else 0
 jailReduce, heatCounter, passedBreak, coincount = 0,0,0,0 
 #setting skills
-meint, mewis, mecha, mestr, medex, mepers, meinv, mehis, meste, mesur = me.skills.intelligence.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.strength.value, me.skills.dexterity.value, me.skills.persuasion.value, me.skills.investigation.value, me.skills.history.value, me.skills.stealth.value, me.skills.survival.value
+meint, mewis, mecha, mestr, medex, mepers, meinv, mehis, meste, mesur, = me.skills.intelligence.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.strength.value, me.skills.dexterity.value, me.skills.persuasion.value, me.skills.investigation.value, me.skills.history.value, me.skills.stealth.value, me.skills.survival.value
 meperswis, mepersint = ((mepers-mecha)+mewis), ((mepers-mecha)+meint)
 meinvwis = ((meinv-meint)+mewis)
 mehiswis = ((mehis-meint)+mewis)
@@ -85,7 +85,8 @@ for i in range(repeat):
                 threatLevel = 1
             else:
                 threatLevel = 0
-            spiceroll = vroll(advroll+str(mepers)+pb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+str(mepers)+pb)
+            spiceBonus = str(max(mepers,meperswis,mepersint))
+            spiceroll = vroll(advroll+spiceBonus+pb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+spiceBonus+pb)
             returnstr += f'**Move Product**: {spiceroll.full} '
             if spiceroll.total >=15:
                 returnstr += f'(Got a sale, gain **50gp**)\n'

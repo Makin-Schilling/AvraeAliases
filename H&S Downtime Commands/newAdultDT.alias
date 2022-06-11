@@ -1,0 +1,150 @@
+tembed -title "**Prostitution DT**" -thumb <image> -color <color> -desc "Requires 2 DT points and only gains cred up to Double Star Threat"
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+
+# Setting Modding Variables and CCs
+if me.cc_exists("Heat") == False:
+    me.create_cc_nx("Heat", 0, 50, None, None)  # makes sure they got a Heat counter, like a good criminal should
+    me.mod_cc("Heat", -50) #set new heat to 0
+if me.cc_exists("Street Cred") == False:
+    me.create_cc_nx("Street Cred", 0, 50, None, None)  # makes sure they got a Street Cred Counter
+    me.mod_cc("Street Cred", -50) #set new street cred to 0
+oheat, ocred= me.get_cc("Heat"), me.get_cc("Street Cred")
+coincount, heatCounter, totalCred = 0, 0, 0
+
+# Setting Rolls
+defroll, advroll, disroll, realRoll = "1d20+","2d20kh1+", "2d20kl1+", ""
+
+# Setting Skills
+meint, mewis, mecha, mecon = me.skills.intelligence.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.constitution.value
+meinv, meperc = me.skills.investigation.value, me.skills.perception.value
+meperf, mepers = me.skills.performance.value, me.skills.performance.value
+meperfcon = ((meperf - mecha)+mecon)
+
+# Setting Skill Bonuses
+searchBonus = str(max(meinv,meperc))
+seductionBonus = str(max(meperf,mepers))
+perfBonus = str(meperfcon)
+cb = "+"+pargs.join('cb', '+') if pargs.get("cb") else ""
+sb = "+"+pargs.join('sb', '+') if pargs.get("sb") else ""
+pb = "+"+pargs.join('pb', '+') if pargs.get("pb") else ""
+
+# Start Making Output Pretty
+
+# Start Reroll loop
+for i in range(repeat):
+    # Start Loop Output
+    returnstr += f' -f "**Attempt** #{i+1}|'
+
+    # Set up rolls
+    searchRoll = vroll(advroll+searchBonus+cb) if pargs.get("withhelp") or pargs.get("cadv") else vroll(defroll+searchBonus+cb)
+    seductionRoll = vroll(advroll+seductionBonus+sb) if pargs.get("withhelp") or pargs.get("sadv") else vroll(defroll+seductionBonus+sb)
+    perfRoll = vroll(advroll+perfBonus+pb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+perfBonus+pb)
+
+    # Check Passes and Output Results
+    returnstr += f'**Client Search**: {searchRoll.full}\n'
+    if searchRoll.total >= 21:
+        returnstr += f'Client: Noble\n'
+    elif searchRoll.total >= 15:
+        returnstr += f'Client: Modest Individual\n'
+    elif searchRoll.total >= 10:
+        returnstr += f'Client: Commoner\n'
+    else:
+        returnstr += f'No Client Found, Try Again\n"'
+        continue
+
+    returnstr += f'**Seduction**: {seductionRoll.full}\n'
+    if seductionRoll.total >= 21:
+        returnstr += f'Successfully Seduced: 50% Tip\n' if perfRoll.total >= 21 else f'Successfully Seduced: 25% Tip\n'
+        coinMultiplier = 1.5 if perfRoll.total >= 21 else 1.25
+    elif seductionRoll.total >= 15:
+        returnstr += f'Successfully Seduced: 10% Tip\n'
+        coinMultiplier = 1.1
+    elif seductionRoll.total >= 10:
+        returnstr += f'Successfully Seduced: No Tip\n'
+        coinMultiplier = 1
+    else:
+        returnstr += f'Failed to seduce, gain `1` heat. Try Again\n"'
+        heatCounter += 1
+        me.mod_cc("Heat", +1)
+        continue
+
+    returnstr += f'**Doing the Deed**: {perfRoll.full}\n'
+    if perfRoll.total >= 21:
+        returnstr += f'You Almost Killed Them... in a good way. Gain `1` Extra Cred\n'
+        totalCred += 1 if me.get_cc("Street Cred") < 25 else 0
+        me.mod_cc("Street Cred", +1) if me.get_cc("Street Cred") < 25 else me.mod_cc("Street Cred", +0)
+    elif perfRoll.total >= 15:
+        returnstr += f'Very Satisfied Customer\n'
+    elif perfRoll.total >= 10:
+        returnstr += f'Satisfied Customer\n'
+    else:
+        returnstr += f'Failed to satisfy, gain `1` heat and lose `1` cred. Try Again\n"'
+        heatCounter += 1
+        me.mod_cc("Heat", +1)
+        totalCred += -1
+        me.mod_cc("Street Cred", -1)
+        continue
+    
+    # Calculate and output Earnings
+    returnstr += f'**Earnings**: '
+    if perfRoll.total >= 21:
+        if searchRoll.total >= 21:
+            coinString = "(3d8*10)+100"
+        elif searchRoll.total >= 15:
+            coinString = "3d6+30"
+        elif searchRoll.total >= 10:
+            coinString = "3d4+10"
+        coinRoll = vroll(coinString)
+        returnstr += f'{coinRoll.full}*`{coinMultiplier}` = `{round(coinRoll.total*coinMultiplier)}`\n'
+        coincount += round(coinRoll.total*coinMultiplier)
+    elif perfRoll.total >= 15:
+        if searchRoll.total >= 21:
+            coinString = "(1d10*10)+100"
+        elif searchRoll.total >= 15:
+            coinString = "1d8+30"
+        elif searchRoll.total >= 10:
+            coinString = "1d6+10"
+        coinRoll = vroll(coinString)
+        returnstr += f'{coinRoll.full}*`{coinMultiplier}` = `{round(coinRoll.total*coinMultiplier)}`\n'
+        coincount += round(coinRoll.total*coinMultiplier)
+    elif perfRoll.total >= 10:
+        if searchRoll.total >= 21:
+            returnstr += f'`100`*`{coinMultiplier}` = `{round(100*coinMultiplier)}`\n'
+            coincount += round(100*coinMultiplier)
+        elif searchRoll.total >= 15:
+            returnstr += f'`30`*`{coinMultiplier}` = `{round(30*coinMultiplier)}`\n'
+            coincount += round(30*coinMultiplier)
+        elif searchRoll.total >= 10:
+            returnstr += f'`10`*`{coinMultiplier}` = `{round(10*coinMultiplier)}`\n'
+            coincount += round(10*coinMultiplier)
+
+    returnstr += f'"'
+
+# adds all the coins and puts in the good ol coin pouch (Just Copy and Paste This)
+# breaks down into gp sp and cp
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
+
+# Prepare Final Output
+returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Heat: `{oheat}` -> `{heatCounter+oheat if heatCounter+oheat <=50 else 50}`\n- Cred: `{ocred}` -> `{totalCred+ocred if totalCred+ocred <=50 else 50}`\n"'
+
+return returnstr
+</drac2>
+-footer "!dt adult [withhelp] [cadv] [sadv] [padv] [-cb #] [-sb #] [-pb #] [-rr #] | Written by Stellumine#5554"

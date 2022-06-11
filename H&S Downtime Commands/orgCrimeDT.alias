@@ -1,7 +1,6 @@
 tembed -title "{{name}} participates in Organized Crime" -desc "Requires 2 Downtime Slots" -thumb <image> -color <color>
-
+{{pargs=argparse(&ARGS&)}}
 <drac2>
-#{{pargs=argparse(&ARGS&)}}
 # Written by MrRobinhood5#1999
 # Editted by Kirbyofdeath#7825
 # further modified by Stellumine#5554
@@ -33,6 +32,7 @@ oheat, ocred, oEm = me.get_cc("Heat"), me.get_cc("Street Cred"), me.get_cc("Emin
 meint, medex, mestr, mewis, mecha, meste, meintim, meperf, meath, mepers= me.skills.intelligence.value, me.skills.dexterity.value, me.skills.strength.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.stealth.value, me.skills.intimidation.value, me.skills.performance.value, me.skills.athletics.value, me.skills.persuasion.value
 stewis, steint, intimstr, intimwis = ((meste-medex)+mewis), ((meste-medex)+meint), ((meintim-mecha)+mestr), ((meintim-mecha)+mewis)
 perfwis, perfint = ((meperf-mecha)+mewis), ((meperf-mecha)+meint)
+perswis, persint = ((mepers-mecha)+mewis), ((mepers-mecha)+meint)
 intelbonus = str(max(me.skills.investigation.value, me.skills.perception.value))
 smoothbonus = str(max(mecha, mewis, meint, meintim, intimstr))
 moneybonus = str(max(meste, stewis, steint, meintim, intimstr, intimwis, mecha, mewis, medex, mestr))
@@ -121,7 +121,8 @@ for i in range(repeat):
         returnstr += f'Hitman'
     elif spice:
         returnstr += f'Spice Dealer'
-        spiceroll = vroll(advroll+str(mepers)+pb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+str(mepers)+pb)
+        spiceBonus = str(max(mepers,perswis,persint))
+        spiceroll = vroll(advroll+spiceBonus+pb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+spiceBonus+pb)
     elif mob:
         returnstr += f'Mob Boss'
     elif vols:
