@@ -1,1 +1,171 @@
-#WIP
+tembed -title "**Pitfighting DT**" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+rest = True if pargs.get("rest") else False
+
+# Setting Modding Variables
+if me.cc_exists("Style Points") == False:
+    me.create_cc_nx("Style Points", 0, 50, None, None)  # makes sure they got a Style points counter, like a good criminal should
+    me.mod_cc("Style Points", -50) #set style points to 0
+ostyle = me.get_cc("Style Points")
+coincount, styleCounter, totalXP = 0, 0, 0
+
+# Setting Rolls
+defroll, advroll, disroll = "1d20+","2d20kh1+", "2d20kl1+"
+
+# Setting Skills
+meath, meacro, meperf = me.skills.athletics.value, me.skills.acrobatics.value, me.skills.performance.value
+mecon, mestr = me.skills.constitution.value, me.skills.strength.value
+mecha, mepers, meintim = me.skills.charisma.value, me.skills.persuasion.value, me.skills.intimidation.value
+
+meathcon = ((meath-mestr)+mecon)
+meintimstr = ((meintim-mecha)+mestr)
+
+# Setting Skill Bonuses
+displayBonus = str(max(meath,meacro,meperf))
+enduranceBonus = str(meathcon)
+crowdBonus = str(max(meintimstr, mepers, meintim))
+db = "+"+pargs.join('db', '+') if pargs.get("db") else ""
+eb = "+"+pargs.join('eb', '+') if pargs.get("eb") else ""
+cb = "+"+pargs.join('cb', '+') if pargs.get("cb") else ""
+
+# Start Making Output Pretty
+returnstr += f'-desc "Requires 2 Downtime Slots"'
+
+# Start Reroll loop
+for i in range(repeat):
+    if rest and me.cc_exists("Lingering Injury"): #If Resting from Pitfighting
+        returnstr += f' -f "Resting|Some times after going on adventures you either dont have the funds to be fixed by the temple or some injuries are beyond their knowledge."' if i == 0 else f''
+        rb = "+"+pargs.join('rb', '+') if pargs.get("rb") else ""
+        restRoll = vroll(advroll+str(me.saves.get('Constitution').value)+rb) if pargs.get("restadv") or pargs.get("withhelp") else vroll(defroll+str(me.saves.get('Constitution').value)+rb)
+        returnstr += f' -f "Roll #{i+1}|**Constitution Save** (DC 15): {restRoll.full}"'
+        if restRoll.total >= 15:
+            returnstr += f' -f "Result|You passed the DC 15, remove `1` Lingering Injury"'
+            me.mod_cc("Lingering Injury", -1)
+        else:
+            returnstr += f' -f "Result|You failed the DC 15"'
+        
+        returnstr += f' -f "Lingering Injury|{me.cc_str("Lingering Injury")}"'
+
+        if me.get_cc("Lingering Injury") <= 0:
+            me.delete_cc("Lingering Injury")
+            returnstr += f' -f "Healed|You no longer have an injury, feel free to go back to your normal duties!"'
+            break
+    elif rest and me.cc_exists("Lingering Injury") == False: # If Shouldn't Be Resting 
+        returnstr += f' -f "No Need to Rest|You have no injury that you need to rest off"'
+        break
+    else: #If Normal Pitfighting
+        # Loop Variables
+        injury = True if me.cc_exists("Lingering Injury") else False
+        passes = 0
+        # Start Loop Output
+        returnstr += f' -f "Roll #{i+1}|'
+
+        # Set up Rolls
+        if injury:
+            displayRoll = vroll(defroll+displayBonus+db) if pargs.get("dadv") or pargs.get("withhelp") else vroll(disroll+displayBonus+db)
+            enduranceRoll = vroll(defroll+enduranceBonus+eb) if pargs.get("eadv") or pargs.get("withhelp") else vroll(disroll+enduranceBonus+eb)
+            crowdRoll = vroll(defroll+crowdBonus+cb) if pargs.get("cadv") or pargs.get("withhelp") else vroll(disroll+crowdBonus+cb)
+        else:
+            displayRoll = vroll(advroll+displayBonus+db) if pargs.get("dadv") or pargs.get("withhelp") else vroll(defroll+displayBonus+db)
+            enduranceRoll = vroll(advroll+enduranceBonus+eb) if pargs.get("eadv") or pargs.get("withhelp") else vroll(defroll+enduranceBonus+eb)
+            crowdRoll = vroll(advroll+crowdBonus+cb) if pargs.get("cadv") or pargs.get("withhelp") else vroll(defroll+crowdBonus+cb)
+
+        # Check Passes and Output Results
+        returnstr += f'**Display Check**: {displayRoll.full}'
+        if displayRoll.total >= 15:
+            returnstr += f'(Passed!)\n'
+            passes += 1
+        else:
+            returnstr += f'(Failed)\n'
+        
+        returnstr += f'**Endurance Check**: {enduranceRoll.full}'
+        if enduranceRoll.total >= 21:
+            returnstr += f'(Passed! +`100`xp!)\n'
+            passes += 1
+            totalXP += 100
+        elif enduranceRoll.total == 20:
+            returnstr += f'(Passed!)\n'
+            passes += 1
+        else:
+            returnstr += f'(Failed, gain an Injury)\n'
+            injury = True
+        
+        returnstr += f'**Crowd Pleasing Check**: {crowdRoll.full}'
+        if crowdRoll.total >= 16:
+            returnstr += f'(Passed! +`50`gp!)\n'
+            passes += 1
+            coincount += 50
+        elif crowdRoll.total == 15:
+            returnstr += f'(Passed!)\n'
+            passes += 1
+        else:
+            returnstr += f'(Failed)\n'
+
+        # Output Results
+        returnstr += f'**Results**: {passes} Passes\n'
+        if passes >= 3:
+            coincount += 300
+            styleCounter += 3
+            returnstr += f' - Coins: `300`\n - Style Points: `3`\n'
+            me.mod_cc("Style Points", +3)
+        elif passes == 2:
+            coincount += 200
+            styleCounter += 2
+            returnstr += f' - Coins: `200`\n - Style Points: `2`\n'
+            me.mod_cc("Style Points", +2)
+        elif passes == 1:
+            coincount += 110
+            styleCounter += 1
+            returnstr += f' - Coins: `110`\n - Style Points: `1`\n'
+            me.mod_cc("Style Points", +1)
+        else:
+            returnstr += f' - Nothing\n'
+        
+        # Check for Injuries
+        if enduranceRoll.total<20:
+            injuryRoll = vroll("1d4")
+            returnstr += f'\n**Lingering Injury!**\n You Failed your endurance roll and got a Lingering Injury!\n**Injury Roll**: {injuryRoll.full}\n**Injury**: '
+            if injuryRoll.total == 4:
+                injuryStr = f'Your wound was healed on the surface but the hit you took did some internal damage. You take 5d6 piercing damage every time you wake up from a long rest.\n'
+            elif injuryRoll.total == 3:
+                injuryStr = f'You for sure shouldn\'t have skipped stretching, you sprained something in your body. You take disadvantage on all Dexterity and Strength Saving throws.\n'
+            elif injuryRoll.total == 2:
+                injuryStr = f'You took a large hit to the head that caused your head to spin. Even after being healed you still feel shaky. You have disadvantage on all mental saving throws and checks\n'
+            else:
+                injuryStr = f'You had a long day of pushing yourself beyond your limit. You gain 2 levels of exhaustion and even after reducing the exhaustion all that adrenaline masked the massive damage you received to your muscles.\n'
+            me.create_cc_nx("Lingering Injury", 0, 7, None, 'bubble', None, None, None, injuryStr)
+            returnstr += injuryStr
+            returnstr += f'\n**Lingering Injury**\n{me.cc_str("Lingering Injury")}\n'
+            returnstr += f'\nYour rerolls have stopped, use the command again if you wish to keep rolling at disadvantage, or use `!dt pitfight rest` to remove your injuries"'
+            break
+
+        returnstr += f'"'
+
+# adds all the coins and puts in the good ol coin pouch (Just Copy and Paste This)
+# breaks down into gp sp and cp
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
+
+# Prepare Final Output
+returnstr += f' -f "Totals|Earnings: `{ogp}` -> `{coincount+ogp}` gp\nStyle Points: `{ostyle}` -> `{ostyle+styleCounter if ostyle+styleCounter <= 50 else 50}`\nBonus Experience (Not Added Automatically): `{totalXP}`"'
+
+return returnstr
+</drac2>
+-footer "!dt pitfight [withhelp] [dadv] [eadv] [cadv] [-db #] [-eb #] [-cb #] [-rr #] [rest] [restadv] [-rb #]| Written by Stellumine#5554"
