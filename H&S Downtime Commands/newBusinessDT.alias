@@ -1,0 +1,86 @@
+tembed -title "**Running a Business DT**" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+
+# Setting Modding Variables
+coincount, wage, hours = 0, 0, 0
+
+# Setting Rolls
+defroll, advroll = "1d20+","2d20kh1+"
+
+# Setting Skills
+mepers, medec, mecha, mecon, meperf = me.skills.persuasion.value, me.skills.deception.value, me.skills.charisma.value, me.skills.constitution.value, me.skills.performance.value
+meperfcon = ((meperf-mecha)+mecon)
+
+# Setting Skill Bonuses
+promoBonus = str(max(mepers,medec))
+withBonus = str(max(meperfcon,mecon))
+pb = "+"+pargs.join('pb', '+') if pargs.get("pb") else ""
+wb = "+"+pargs.join('wb', '+') if pargs.get("wb") else ""
+
+# Start Making Output Pretty
+returnstr += f' -desc "Requires 2 Downtime Slots"'
+
+# Start Reroll loop
+for i in range(repeat):
+    # Start Loop Output
+    returnstr += f' -f "Day #{i+1}|'
+
+    # Set Up Rolls
+    promoRoll = vroll(advroll+promoBonus+pb) if pargs.get("padv") or pargs.get("withhelp") else vroll(defroll+promoBonus+pb)
+    withRoll = vroll(advroll+withBonus+wb) if pargs.get("wadv") or pargs.get("withhelp") else vroll(defroll+withBonus+wb)
+
+    # Check Passes and Output Results
+    returnstr += f'**Promotion Check**: {promoRoll.full}\n'
+    if promoRoll.total >= 21:
+        wage = 20
+    elif promoRoll.total >= 15:
+        wage = 15
+    elif promoRoll.total >= 10:
+        wage = 10
+    else:
+        wage = 5
+
+    returnstr += f'**Withstand Check**: {withRoll.full}\n'
+    if withRoll.total >= 21:
+        hours = 16
+    elif withRoll.total >= 15:
+        hours = 8
+    elif withRoll.total >= 10:
+        hours = 4
+    else:
+        hours = 1 
+
+    # Calculate Wages
+    coincount += wage*hours
+    returnstr += f'**Results**\nWage: `{wage}`gp\nHours: `{hours}`\nTotal: {wage}*{hours}=`{wage*hours}`gp'
+    returnstr += f'"'
+
+# adds all the coins and puts in the good ol coin pouch (Just Copy and Paste This)
+# breaks down into gp sp and cp
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
+
+# Prepare Final Output
+returnstr += f' -f "Total Coin Earned|`{coincount}`"'
+returnstr += f' -f "Earnings, Added Automatically|`{ogp}` -> `{coincount+ogp}` gp"'
+
+return returnstr
+</drac2>
+-footer "!dt business [padv] [wadv] [-pb #] [-wb #] [-rr #] | Written by Stellumine#5554"

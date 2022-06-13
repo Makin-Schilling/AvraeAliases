@@ -1,0 +1,36 @@
+tembed -title "**Patrol DT**" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+
+# Setting Rolls
+defroll, advroll, disroll, realRoll = "1d20+","2d20kh1+", "2d20kl1+", ""
+
+# Setting Skills
+meinv, meperc = me.skills.investigation.value, me.skills.perception.value
+
+# Setting Skill Bonuses
+patrolBonus = str(max(meinv, meperc))
+b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+
+# Start Making Output Pretty
+returnstr += f'-desc "Requires 1 downtime and a Copper Tag\n\n ◽ First, RP to wherever in the City you choose to patrol\n ◽ Second, roll a perception or investigation check.\n ◽ If you roll higher or have a higher passive score than someone doing the Crime DT, you catch them and are able to turn them into the town hall to arrest them.\n\nAn arrest gives you 1 Eminence."'
+
+# Set up Work Roll
+if pargs.get("adv"):
+    realRoll = advroll
+elif pargs.get("dis"):
+    realRoll = disroll
+else:
+    realRoll = defroll
+patrolRoll = vroll(realRoll+patrolBonus+b)
+
+# Check Passes and Output Results
+returnstr += f' -f "**Patrol**|{patrolRoll.full}\n"'
+
+return returnstr
+</drac2>
+-footer "!dt patrol [adv] [dis] [-b #] | Written by Stellumine#5554"
