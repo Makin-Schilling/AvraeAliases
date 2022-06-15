@@ -79,7 +79,7 @@ for i in range(repeat):
         if trainingRoll.result.crit == 2:
             returnstr += f'**CRIT FAILED**\n'
             me.mod_cc("Training", -1)
-            trainingCount = trainingCount - 1
+            trainingCount = trainingCount - 1 if oTraining+trainingCount >=0 else trainingCount
         else:
             returnstr += f'**FAILED**\n'
 
