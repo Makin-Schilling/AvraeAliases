@@ -1,0 +1,122 @@
+tembed -title "**Hunting DT**" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+
+# Setting Modding Variables
+coincount = 0
+
+# Setting Rolls
+defroll, advroll = "1d20+","2d20kh1+"
+
+# Setting Skills
+meinv, meperc = me.skills.investigation.value, me.skills.perception.value
+meste, medex, meint, mewis = me.skills.stealth.value, me.skills.dexterity.value, me.skills.intelligence.value, me.skills.wisdom.value
+mestewis, mesteint = ((meste-medex)+mewis), ((meste-medex)+meint)
+meattack = me.skills.strength.value+me.stats.prof_bonus if me.skills.strength.value > medex else medex+me.stats.prof_bonus
+mesurv, menat = me.skills.survival.value, me.skills.nature.value
+
+# Setting Skill Bonuses
+scoutBonus = str(max(meinv,meperc))
+sb = "+"+pargs.join('sb', '+') if pargs.get("sb") else ""
+camoBonus = str(max(meste,mestewis,mesteint))
+cb = "+"+pargs.join('cb', '+') if pargs.get("cb") else ""
+killBonus = str(meattack)
+kb = "+"+pargs.join('kb', '+') if pargs.get("kb") else ""
+lootBonus = str(max(mesurv,menat))
+lb = "+"+pargs.join('lb', '+') if pargs.get("lb") else ""
+
+# Start Making Output Pretty
+returnstr += f'-desc "Takes 2 Downtime Slots"'
+
+# Start Reroll loop
+for i in range(repeat):
+    # Start Loop Output
+    returnstr += f' -f "Roll #{i+1}|'
+
+    # Set up Work Roll
+    scoutRoll = vroll(advroll+scoutBonus+sb) if pargs.get("sadv") else vroll(defroll+scoutBonus+sb)
+    camoRoll = vroll(advroll+camoBonus+cb) if pargs.get("cadv") else vroll(defroll+camoBonus+cb)
+    killRoll1 = vroll(advroll+killBonus+kb) if pargs.get("kadv") else vroll(defroll+killBonus+kb)
+    killRoll2 = vroll(advroll+killBonus+kb) if pargs.get("kadv") else vroll(defroll+killBonus+kb)
+    lootRoll = vroll(advroll+lootBonus+lb) if pargs.get("ladv") else vroll(defroll+lootBonus+lb)
+
+    # Check Passes and Output Results
+    returnstr += f'**Scouting Roll**: {scoutRoll.full}'
+    if scoutRoll.total >= 20:
+        returnstr += f' (Found a *Large* Beast)\n'
+        killDC = 20
+    elif scoutRoll.total >= 15:
+        returnstr += f' (Found a *Medium* Beast)\n'
+        killDC = 15
+    else:
+        returnstr += f' (Found Nothing Today)\n"'
+        continue
+    
+    returnstr += f'**Camouflage Roll**: {camoRoll.full}'
+    if camoRoll.total >= 20:
+        returnstr += f' (You are Hidden)\n'
+    else:
+        returnstr += f' (The Beast Spotted You)\n"'
+        continue
+    
+    returnstr += f'**Killshot Roll**: \nAttack 1: {killRoll1.full}\nAttack 2: {killRoll2.full}\n'
+    if killRoll1.total >= killDC and killRoll2.total >= killDC:
+        returnstr += f'You have Successfully taken down a beast, you gain `{30 if killDC < 20 else 50}`gp. Roll your loot!\n'
+        coincount += 30 if killDC < 20 else 50 
+    else:
+        returnstr += f'You missed one or both your attacks and the beast escaped\n"'
+        continue
+
+    returnstr += f'**Loot Roll**: {lootRoll.full}'
+    if lootRoll.total >= 20:
+        returnstr += f'You gain `3` Beast Parts. Beast is Listed Bellow\n'
+    elif lootRoll.total >= 15:
+        returnstr += f'You gain `2` Beast Parts. Beast is Listed Bellow\n'
+    else:
+        returnstr += f'No Beast Parts Gained Today\n'
+
+    returnstr += f'"'
+
+    # Output Killed Beast for Part Collection
+    
+    if killDC < 20 and lootRoll.total >= 15:
+        beasts = load_json(get_gvar('3f0f4d76-efd5-4190-9520-8e707b288053'))
+        beast = vroll(f'1d{len(beasts)}')
+        beastName = beasts[beast.total-1]['name']
+        beastCR = beasts[beast.total-1]['cr']
+        returnstr += f' -f "Beast|{beastName}\nCR: {beastCR}"'
+    elif killDC >= 20 and lootRoll.total >= 20:
+        beasts = load_json(get_gvar('b2186794-8fc7-46b3-a237-1c78d48a5494'))
+        beast = vroll(f'1d{len(beasts)}')
+        beastName = beasts[beast.total-1]['name']
+        beastCR = beasts[beast.total-1]['cr']
+        returnstr += f' -f "Beast|{beastName}\nCR: {beastCR}"'
+
+# adds all the coins and puts in the good ol coin pouch (Just Copy and Paste This)
+# breaks down into gp sp and cp
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
+
+# Prepare Final Output
+returnstr += f' -f "Total Coin Earned|`{coincount}`"'
+returnstr += f' -f "Earnings, Added Automatically|`{ogp}` -> `{coincount+ogp}` gp"'
+
+return returnstr
+</drac2>
+-footer "!dt hunt [sadv] [cadv] [kadv] [ladv] [-sb #] [-cb #] [-kb #] [-lb #] [-rr #] | Written by Stellumine#5554"
