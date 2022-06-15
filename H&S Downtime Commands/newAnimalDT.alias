@@ -1,1 +1,90 @@
-WIP
+tembed -title "**Animal Training DT**" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+
+#checking the command used
+if pargs.get("setup"): #if setting up training
+    returnstr += ' -footer "!dt animal setup [-name \'name/type of animal\'] [-level tame/train/drill] [-cr #] | Written by Stellumine#5554"'
+
+    if pargs.get("name") and pargs.get("level") and pargs.get("cr"): # if all correct arguments
+        animalName = str(pargs.get("name")[0])
+        animalTrain = str(pargs.get("level")[0]) if pargs.get("level")[0] == "tame" or pargs.get("level")[0] == "train" or pargs.get("level")[0] == "drill" else err("-level only accepts arguments `tame`, `train`, or `drill`")
+        animalCR = str(pargs.get("cr")[0])
+        returnstr += f' -f "Setup|Name: {animalName}\nTraining: {animalTrain}\nCR: {animalCR}\n"'
+        jsonString = '{"name":"'+animalName+'","training":"'+animalTrain+'","cr":"'+str(animalCR)+'"}'
+        me.set_cvar_nx("animalTraining", jsonString)
+        maxCC = 10*animalCR if animalCR != "1/2" and animalCR != "1/4" and animalCR != "1/8" else 10 
+        me.create_cc_nx("Animal Training", 0, maxCC, None, None, None, None, None, "Training: "+animalName+"\nLevel: "+animalTrain+"\nCR: "+str(animalCR))
+        me.set_cc("Animal Training", 0)
+    else:
+        returnstr += f' -f "Setup Help|Animal Training needs `3` arguments to begin training.\nIt needs the **Name/Type** of animal, the **level of training** you will be doing (`tame`/`train`/`drill`), and the **CR** of the creature to be trained.\n Run the command with the arguments listed and then you can begin training!"'
+else:
+    #setup other needed variables
+    returnstr += ' -footer "!dt animal [adv] [-b #] [-rr #] | Written by Stellumine#5554"'
+    setupComplete = get("animalTraining", False)
+    defroll, advroll = "1d20+","2d20kh1+"
+    if setupComplete == False: #Havent Done Setup
+        returnstr += f' -f "No Animal To Train|Run the command `!animal setup` for help setting up animal training."'
+    else: #Have Done Setup
+        #set Extra Variables
+        oTrain, trainCount = me.get_cc("Animal Training"), 0
+        animalInfo = load_json(get("animalTraining"))
+        aName = animalInfo['name']
+        aCR = animalInfo['cr']
+        aCR = int(animalInfo['cr'])if aCR != "1/8" and aCR != "1/4" and aCR != "1/2" else aCR
+        aLevel = animalInfo['training']
+
+        if aLevel == "tame":
+            trainDC = 10+aCR if aCR != "1/8" and aCR != "1/4" and aCR != "1/2" else 10
+        elif aLevel == "train":
+            trainDC = 12+aCR if aCR != "1/8" and aCR != "1/4" and aCR != "1/2" else 12
+        else:
+            trainDC = 14+aCR if aCR != "1/8" and aCR != "1/4" and aCR != "1/2" else 14
+            
+        b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+
+        returnstr += f' -f "Training Info|Name: `{aName}`\nLevel: `{aLevel}`\nCR: `{aCR}`\nDC: `{trainDC}`"'
+        #Start Output Loop
+        for i in range(repeat):
+            returnstr += f' -f "**Roll #{1+i}**\n'
+            
+            # roll the dive
+            trainRoll = vroll(advroll+str(me.skills.animalHandling.value)+b) if pargs.get("adv") else vroll(defroll+str(me.skills.animalHandling.value)+b)
+
+            #output pretty results and add success/fail
+            returnstr += f'**Training Roll**: {trainRoll.full}'
+            if trainRoll.total >= trainDC:
+                returnstr += f' (**Crit Passed**! +`2`)' if trainRoll.result.crit == 1 else f' (**Passed**! +`1`)'
+                trainCount += 2 if trainRoll.result.crit == 1 else 1
+                me.mod_cc("Animal Training", +2) if trainRoll.result.crit == 1 else me.mod_cc("Animal Training", +1)
+            else:
+                returnstr += f' (**Crit Failed**! -`1`)' if trainRoll.result.crit == 2 else f' (**Failed**!)'
+                trainCount = trainCount - 1  if trainRoll.result.crit == 2 and oTrain+trainCount > 0 else trainCount - 0
+                me.mod_cc("Animal Training", -1) if trainRoll.result.crit == 2 else me.mod_cc("Animal Training", +0)
+
+            if oTrain+trainCount >= me.get_cc_max("Animal Training"): #if finished training
+                if aLevel == 'train' or aLevel == 'tame':
+                    returnstr += f'\nYou have finished training {aName} and subsequent rerolls have stopped. \nYour training level has been updated and you can continue to train, or you can do `!cvar delete animalTraining` to train a new animal."'
+                    maxCC = 10*aCR if aCR != "1/8" and aCR != "1/4" and aCR != "1/2" else 10 
+                    me.edit_cc("Animal Training", 0, maxCC, None, None, None, None, None, "Training: "+aName+"\nLevel: train\nCR: "+str(aCR)) if aLevel == "tame" else me.edit_cc("Animal Training", 0, maxCC, None, None, None, None, None, "Training: "+aName+"\nLevel: drill\nCR: "+str(aCR))
+                    me.set_cc("Animal Training", 0)
+                    jsonString = '{"name":"'+aName+'","training":"train","cr":"'+str(aCR)+'"}' if aLevel=="tame" else '{"name":"'+aName+'","training":"drill","cr":"'+str(aCR)+'"}'
+                    me.set_cvar("animalTraining", jsonString)
+                    break
+                else:
+                    returnstr += f'\nYou have fully trained {aName}. Your setup and cc have been deleted, please use `!dt animal setup` if you wish to train another animal."'
+                    me.delete_cvar("animalTraining")
+                    me.delete_cc("Animal Training")
+                    break
+
+            returnstr += f'"'
+        if me.cc_exists("Animal Training"):
+            returnstr += f' -f "Animal Training Progress|{me.cc_str("Animal Training")}(+{trainCount})"'
+
+return returnstr
+</drac2>
