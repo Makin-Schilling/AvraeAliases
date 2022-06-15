@@ -76,11 +76,11 @@ for i in range(repeat):
     if trainingRoll.total >= 15:
         if trainingRoll.result.crit == 1:
             returnstr += f'**CRIT PASSED**\n'
-            me.mod_cc("Extensive Training", +4) if pargs.get("mentor") else me.mod_cc("Training", +2)
+            me.mod_cc("Extensive Training", +4) if pargs.get("mentor") else me.mod_cc("Extensive Training", +2)
             trainingCount += 4 if pargs.get("mentor") else 2
         else:
             returnstr += f'**PASSED**\n'
-            me.mod_cc("Extensive Training", +2) if pargs.get("mentor") else me.mod_cc("Training", +1)
+            me.mod_cc("Extensive Training", +2) if pargs.get("mentor") else me.mod_cc("Extensive Training", +1)
             trainingCount += 2 if pargs.get("mentor") else 1
     else:
         if trainingRoll.result.crit == 2:
