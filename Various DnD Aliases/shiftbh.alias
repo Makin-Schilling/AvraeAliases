@@ -1,0 +1,22 @@
+!alias shiftbh embed
+-title "{{name}} uses Shifting: Beasthide"
+<drac2>
+returnstr = f''
+combatant, me = combat().me, character()
+cc = "Shifting"
+ccExists = me.cc_exists(cc)
+thpAdd = vroll(("1d6")+ "+" + str(combatant.stats.prof_bonus*2))
+if combat() != None:
+    if ccExists and me.get_cc(cc) > 0:
+        combatant.set_temp_hp(thpAdd.total)
+        combatant.add_effect("Shifting: Beasthide",duration=10, passive_effects={"ac_bonus":1})
+        me.mod_cc("Shifting",-1)
+        returnstr += f' -f "THP Roll|{thpAdd.full}" -f "Total HP|{me.hp_str()}" -f "Curent AC|{combatant.ac} (+1)" -f "Shifting|{me.cc_str(cc)} (-1)"'
+    elif ccExists:
+        returnstr += f' -desc "You must rest before you can use this ability again"'
+    else:
+        returnstr += f' -desc "You do not have this ability"'
+else:
+    returnstr += f' -desc "There is no combat, use `!cc shifting -1` instead"'
+return returnstr
+</drac2> 

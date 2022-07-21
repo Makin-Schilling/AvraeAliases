@@ -106,7 +106,7 @@ for i in range(repeat):
   else:
     returnstr += f'No Path Chosen\n"'
 
-me.mod_cc(em, +emgain)
+#me.mod_cc(em, +emgain)
 returnstr += f' -f "Totals|- Eminence: {me.get_cc(em)} ({emgain:+})\n- Bonus Experience (Not added automatically): `{totalExperience}`"'
 #breaks down into gp sp and cp
 ngp = int(coincount)

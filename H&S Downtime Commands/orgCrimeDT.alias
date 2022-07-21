@@ -14,7 +14,7 @@ observantBonus = "" if not isObservant else "+5[observant]"
 #set path
 counter, enforcer, thief, hitman, spice, mob, legit, vols, low, = True if pargs.get("counter") else False, True if pargs.get("enforcer") else False, True if pargs.get("thief") else False, True if pargs.get("hitman") else False, True if pargs.get("spice") else False, True if pargs.get("mob") else False, True if pargs.get("legit") else False, True if pargs.get("vols") else False, True if pargs.get("low") else False
 #set all rolls
-defroll,advroll,ratgp,middlegp,modestgp,noblegp= "1d20+","2d20kh1+","3d6+5","3d8+50","3d10+150","2d12+300"
+defroll,advroll,ratgp,middlegp,modestgp,noblegp= "1d20+","2d20kh1+","3d6+5","3d8+50","(3d10*10)+150","(2d12*10)+300"
 #set all counters
 earnmod,coincount,totalCred,heatCounter,heatadd,repeat,heatReduce,totalXP,totalPassedVols,totalEm,hitmanshown = 0,0,0,0,0,int(pargs.get("rr")[0]) if pargs.get("rr") else 1, 0, 0, 0, 0,False
 #get current heat and credits
@@ -29,13 +29,14 @@ if vols and me.cc_exists("Eminence") == False:
     me.mod_cc("Eminence", -50) #set new eminence to 0
 oheat, ocred, oEm = me.get_cc("Heat"), me.get_cc("Street Cred"), me.get_cc("Eminence") if vols else 0
 # Now we build all the roll bonuses and the specified bonuses for [-ib] [-sb] [-mb]
-meint, medex, mestr, mewis, mecha, meste, meintim, meperf, meath, mepers= me.skills.intelligence.value, me.skills.dexterity.value, me.skills.strength.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.stealth.value, me.skills.intimidation.value, me.skills.performance.value, me.skills.athletics.value, me.skills.persuasion.value
+meint, medex, mestr, mewis, mecha, meste, meintim, meperf, meath, mepers, medesc= me.skills.intelligence.value, me.skills.dexterity.value, me.skills.strength.value, me.skills.wisdom.value, me.skills.charisma.value, me.skills.stealth.value, me.skills.intimidation.value, me.skills.performance.value, me.skills.athletics.value, me.skills.persuasion.value, me.skills.deception.value
 stewis, steint, intimstr, intimwis = ((meste-medex)+mewis), ((meste-medex)+meint), ((meintim-mecha)+mestr), ((meintim-mecha)+mewis)
 perfwis, perfint = ((meperf-mecha)+mewis), ((meperf-mecha)+meint)
 perswis, persint = ((mepers-mecha)+mewis), ((mepers-mecha)+meint)
+descwis, descint = ((medesc-mecha)+mewis), ((medesc-mecha)+meint)
 intelbonus = str(max(me.skills.investigation.value, me.skills.perception.value))
-smoothbonus = str(max(mecha, mewis, meint, meintim, intimstr))
-moneybonus = str(max(meste, stewis, steint, meintim, intimstr, intimwis, mecha, mewis, medex, mestr))
+smoothbonus = str(max(meintim, intimstr,perswis,persint,mepers,medesc,descint,descwis))
+moneybonus = str(max(meste, stewis, steint, meintim, intimstr, mecha, mewis, medex, mestr))
 ib = "+"+pargs.join('ib', '+') if pargs.get("ib") else ""
 sb = "+"+pargs.join('sb', '+') if pargs.get("sb") else ""
 mb = "+"+pargs.join('mb', '+') if pargs.get("mb") else ""
@@ -113,7 +114,7 @@ for i in range(repeat):
         returnstr += f'Enforcer'
     elif thief:
         returnstr += f'Thief'
-        ratgp,middlegp,modestgp,noblegp= "3d6+10","3d8+100","3d10+300","2d12+600"
+        ratgp,middlegp,modestgp,noblegp= "3d6+10","3d8+100","(3d10*10)+300","(2d12*10)+600"
         threatLevel = threatLevel - 1 
         if threatLevel < 0:
             threatLevel = 0 
@@ -145,7 +146,7 @@ for i in range(repeat):
 
         if intelroll.total >= 21:
             returnstr += f'(Noble)\n'
-            counterDice = "4d12*"+threatLevel+"+300"
+            counterDice = "(4d12*10)*"+threatLevel+"+300"
             countRoll = vroll(counterDice)
             for i in range(len(countRoll.dice)):
                 if countRoll.dice[i] == '1':
@@ -153,7 +154,7 @@ for i in range(repeat):
                         numOnes += 1
         elif intelroll.total >= 15:
             returnstr += f'(Shopkeep)\n'
-            counterDice = "6d10*"+threatLevel+"+150"
+            counterDice = "(6d10*10)*"+threatLevel+"+150"
             countRoll = vroll(counterDice)
             for i in range(len(countRoll.dice)):
                 if countRoll.dice[i] == '1':
@@ -363,4 +364,4 @@ else:
 
 return returnstr
 </drac2>
--footer "!orgCrime [withhelp] [iadv] [sadv] [madv] [-ib #] [-sb #] [-mb #] [-rr #] [passive] [counter] [enforcer] [thief] [hitman] [spice] [-pb #] [padv] [mob] [legit] [low] | Written by Stellumine#5554"
+-footer "!orgcrime [withhelp] [iadv] [sadv] [madv] [-ib #] [-sb #] [-mb #] [-rr #] [passive] [counter] [enforcer] [thief] [hitman] [spice] [-pb #] [padv] [mob] [legit] [low] | Written by Stellumine#5554"
