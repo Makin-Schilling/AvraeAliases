@@ -1,0 +1,27 @@
+embed
+-title "Sheylia's Commands"
+-desc "*Reminder commands for Shey*"
+-f "__Downtime__|**Vigilante** -`!vigil`
+"
+
+-f "__Vestiges and Boons__|**Bow of the Shadow of the Mind** - `!botsotm`
+**Boon of the Wooded Mind** - `!botwm`
+"
+
+-f "__Skill Commands and Snippets__|
+__Magiano's Gift: Saving Throw__ - `!cc saving -1` (TEMP)
+__Magiano's Gift: Detect Magic__ - `!cc detect -1`
+__Law of the Merciful__ - `!use mercy` (`-t target` if in combat)
+__Arrows of the Muddled Mind__ - `!use muddled -t target`
+__Total Calm__ - `!use calm`
+__Second Wind__ - `!a second`
+__Action Surge__ - `!a surge`
+__Indomitable__ - `!cc indom -1`
+__Fighting Spirit__ - `!a fight`
+__Fey Touched: Hunters Mark__ - `!cast hunter -t target -i` and `!cc hunter -1` (TEMP)
+__Fey Touched: Misty Step__ - `!cc misty -1`
+__Will of Nature__ - `!use will -t target1 -t target2`
+__Sharpshooter__ - `sharp`
+__Elven Accuracy__ - `eadv`
+"
+-footer "!charStuff shey commands"

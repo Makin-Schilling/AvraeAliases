@@ -1,0 +1,30 @@
+embed
+-title "Rhealah's Commands"
+-desc "*Reminder commands for Rhea*"
+-f "__Downtime__|**Work** -`!dt work adv -b d4`
+**Extensive Training** - `!dt extrain date \"Constitution\" con adv -b d4`
+"
+
+-f "__Vestiges and Boons__|**Hammer of Yarsibela** - `!getitem get hoy`
+**Awakened Hammer of Yarsibela** - `!getitem get ahoy`
+**Boon of the Celestial Champion** - `!botcc`
+"
+
+-f "__Skill Commands and Snippets__|
+__Radiant Soul__ - `!use radiant`
+__Healing Hands__ - `!a healing` (include `-t target` in combat)
+__Favored by the Gods__ - `!use favored`
+__Hammer of Healing__ - `max`
+__Tempest Soul: Attack Damage__ - `soullightning` or `soulradiant`
+__Tempest Soul: Reactive Damage__ - `!use tempest`
+__Tempest Soul: Call Lightning__ - `!use callLightning`
+__Healing Quasar__ - `!quasar -t target1 -t target2...`
+__Blitz Surge__ - `!blitz`
+__Incarnation of Hope__ - `!use hope -t target`
+__Bloodwell Vial__ - `!bloodwell`
+__Shield Brothers__ - `!cast Warding Bond -t target -i` and `!cc Shield -1`
+__Hexblade's Curse__ - `!cc hexblade -1` and `hexblade`
+__Hex__ - `!hex -t target -score abilityScore` and `hex`
+__Angelic Blood__ - `!use angelic -t target`
+"
+-footer "!charStuff rhea commands"

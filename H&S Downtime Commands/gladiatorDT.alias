@@ -1,4 +1,4 @@
-tembed -title "**Pitfighting DT**" -thumb <image> -color <color>
+tembed -title "**{{name}} does Gladiator DT**" -thumb <image> -color <color>
 {{pargs=argparse(&ARGS&)}}
 <drac2>
 # Written by Stellumine#5554
@@ -43,12 +43,12 @@ for i in range(repeat):
         returnstr += f' -f "Resting|Some times after going on adventures you either dont have the funds to be fixed by the temple or some injuries are beyond their knowledge."' if i == 0 else f''
         rb = "+"+pargs.join('rb', '+') if pargs.get("rb") else ""
         restRoll = vroll(advroll+str(me.saves.get('Constitution').value)+rb) if pargs.get("restadv") or pargs.get("withhelp") else vroll(defroll+str(me.saves.get('Constitution').value)+rb)
-        returnstr += f' -f "Roll #{i+1}|**Constitution Save** (DC 15): {restRoll.full}"'
-        if restRoll.total >= 15:
-            returnstr += f' -f "Result|You passed the DC 15, remove `1` Lingering Injury"'
+        returnstr += f' -f "Roll #{i+1}|**Constitution Save** (DC 10): {restRoll.full}"'
+        if restRoll.total >= 10:
+            returnstr += f' -f "Result|You passed the DC 10, remove `1` Lingering Injury"'
             me.mod_cc("Lingering Injury", -1)
         else:
-            returnstr += f' -f "Result|You failed the DC 15"'
+            returnstr += f' -f "Result|You failed the DC 10"'
         
         returnstr += f' -f "Lingering Injury|{me.cc_str("Lingering Injury")}"'
 
@@ -168,4 +168,4 @@ returnstr += f' -f "Totals|Earnings: `{ogp}` -> `{coincount+ogp}` gp\nStyle Poin
 
 return returnstr
 </drac2>
--footer "!dt pitfight [withhelp] [dadv] [eadv] [cadv] [-db #] [-eb #] [-cb #] [-rr #] [rest] [restadv] [-rb #]| Written by Stellumine#5554"
+-footer "!gladiator [withhelp] [dadv] [eadv] [cadv] [-db #] [-eb #] [-cb #] [-rr #] [rest] [restadv] [-rb #]| Written by Stellumine#5554"

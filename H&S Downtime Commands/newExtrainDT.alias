@@ -76,12 +76,12 @@ for i in range(repeat):
     if trainingRoll.total >= 15:
         if trainingRoll.result.crit == 1:
             returnstr += f'**CRIT PASSED**\n'
-            me.mod_cc("Extensive Training", +4) if pargs.get("mentor") else me.mod_cc("Extensive Training", +2)
-            trainingCount += 4 if pargs.get("mentor") else 2
+            me.mod_cc("Extensive Training", +2)
+            trainingCount += 2
         else:
             returnstr += f'**PASSED**\n'
-            me.mod_cc("Extensive Training", +2) if pargs.get("mentor") else me.mod_cc("Extensive Training", +1)
-            trainingCount += 2 if pargs.get("mentor") else 1
+            me.mod_cc("Extensive Training", +1)
+            trainingCount += 1
     else:
         if trainingRoll.result.crit == 2:
             returnstr += f'**CRIT FAILED**\n'
@@ -98,6 +98,8 @@ for i in range(repeat):
 
 # adds all the coins and puts in the good ol coin pouch (Just Copy and Paste This)
 # breaks down into gp sp and cp
+platCoins = int(coincount/10)
+coincount = int(coincount%10)
 ngp = int(coincount)
 nsp = (coincount - ngp)*10
 ncp = int((nsp-int(nsp))*10)
@@ -107,13 +109,19 @@ bagsLoaded=load_json(bags) #load the bags
 if "Coin Pouch" not in str(bagsLoaded):
   return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
 pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+opp = pouch[1]['pp'] # what pp before?
 ogp = pouch[1]['gp'] # what gp was before?
-pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+if platCoins > opp:
+    amountOver = platCoins - opp
+    ngp += 10*amountOver
+    platCoins = platCoins - amountOver
+pouch[1].update({'pp':pouch[1]['pp']-platCoins, 'gp':pouch[1]['gp']-ngp, 'sp':pouch[1]['sp']-nsp, 'cp':pouch[1]['cp']-ncp}) #updates new quantities locally
 pouch in bagsLoaded or bagsLoaded.append(pouch)
 me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
 
 returnstr += f' -f "Extensive Training Progress|{me.cc_str("Extensive Training")}({"+" if trainingCount >0 else ""}{trainingCount})"'
-returnstr += f' -f "Removed Coins|Total: {coincount}\n`{ogp}` -> `{ogp-coincount}` gp"'
+returnstr += f' -f "Removed Coins|Total: {platCoins*10+ngp}\n`{ogp}` -> `{ogp-ngp}`gp\n`{opp}` -> `{opp-platCoins}`pp"'
+
 
 return returnstr
 </drac2>
