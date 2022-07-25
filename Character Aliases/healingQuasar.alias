@@ -1,0 +1,67 @@
+!alias quasar embed
+<drac2>
+ch = character()
+com = combat()
+desc = f'"{get_gvar("23e157f9-7e90-4b30-9c8a-fb68fa6771fc")}"'
+args = &ARGS&
+combatants = com.combatants
+argTargets = []
+targets = []
+
+D = f''
+F = f''
+T = f''
+
+cc = "Healing Quasar"
+spellLevel = 0
+if ch.cc_exists(cc) and ch.get_cc(cc) > 0:
+    T += f'"{name} uses Healing Quasar"'
+    ch.mod_cc(cc,-1)
+    F += f'"**Healing Quasar**|{ch.cc_str(cc)} (-1)"'
+    D += desc
+elif ch.cc_exists(cc):
+    for i in range(4,10):
+        if ch.spellbook.get_slots(i) > 0:
+            spellLevel = i
+            break
+    if spellLevel != 0:
+        T += f'"{name} uses Healing Quasar"'
+        ch.spellbook.use_slot(spellLevel)
+        F += f'"Level {spellLevel} Spell Slot|{ch.spellbook.get_slots(spellLevel)}/{ch.spellbook.get_max_slots(spellLevel)} (-1)"'
+        D += desc
+    else:
+        T += f'"{name} fails to use Healing Quasar"'
+        D += f'"You must rest to regain Healing Quasar or regain spell slots"'
+        F += f'"**NONE**"'
+else:
+    T += f'"{name} doesn\'t have Healing Quasar"'
+    D += f'"You don\'t have this ability"'
+    F += f'"**NONE**"'
+
+i = 0
+while i < len(args):
+    if args [i] == "-t" or args [i] == "-target" and i+1 <= len(args):
+        argTargets.append(args[i+1])
+    i = i + 1
+
+for x in combatants:
+    for y in argTargets:
+        if y.lower() in x.name.lower():
+            targets.append(x)
+            break
+
+dice = "8d6+"+str(ch.skills.charisma.value) if ch.name != "Rhealah" else "8*6+"+str(ch.skills.charisma.value)
+healing = vroll(dice)
+healed = f'"Damage Healed|{healing.full}\n\n'
+
+for i in targets:
+    healed += f'{i.name} HP: +{healing.total} = '
+    i.modify_hp(+healing.total, overflow=False)
+    healed += f'{i.hp_str()}\n'
+
+healed += f'"'
+</drac2>
+-title {{T}}
+-desc {{D}}
+-f {{healed}}
+-f {{F}}

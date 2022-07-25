@@ -1,0 +1,45 @@
+!alias charStuff tembed
+-title "Stella's Characters"
+-desc "*Stella's Characters in the H&S Server and various commands and information about them*"
+-f "Active Characters | **Rhealah Amana** | *Protector Aasimar - Divine Soul Sorcerer/Hexblade Warlock*
+`!char Rhea`
+`!charStuff Rhea`
+NPC CODES: `rhea` and `aura`
+
+**Sheylia Homeguard** | *Wood Elf - Samurai Fighter*
+`!char Shey`
+`!charStuff Shey`
+NPC CODES: `shey` and `star`
+
+**Emmeth** | *Mark of the Shadow Elf - Swashbuckler Rogue/Eloquence Bard*
+`!char Emm`
+`!charStuff Emm`
+NPC CODE: `emm`
+
+**Zalori** | *Winged Tiefling - Undead Warlock*
+`!char Zal`
+`!charStuff Zal`
+NPC CODES: `zal` and `nesta`
+
+**Vair Hestliff** | *Harengon - Ancients Paladin/Barbarian*
+`!char Vair`
+`!charStuff Vair`
+NPC CODE: `vair`
+
+**Amarisa Tormentia** | *Half High Elf - Clockwork Soul Sorcerer*
+`!char Ama`
+`!charStuff Ama`
+NPC CODE: `ami`
+
+**Vixe Nalri** | *(Half) Tabaxi - Kensei Monk/Bard*
+`!char Vixe`
+`!charStuff Vixe`
+NPC CODE: `vixe`
+"
+-f "Shelved Characters|
+**Aitha & Willow** | *Rock Gnome - Battlesmith Artificer/Bladesinging Wizard*
+`!char Aitha` or `!char Willow`
+`!charStuff Aitha`
+NPC CODES: `ait` and `willow`
+"
+-footer "!charStuff [Character Code]"
