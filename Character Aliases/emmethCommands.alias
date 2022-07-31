@@ -1,0 +1,28 @@
+embed
+-title "Emmeth's Commands"
+-desc "*Reminder commands for Emmeth*"
+-f "__Downtime__|**Crime** -`!crime -bb d4 -sb d4 badv hitman`
+**Work** - `!dt work -b d4`
+"
+
+-f "__Vestiges and Boons__|**Mask of Memories** - `!getitem get mom`
+**Boon of the Jaunter** - `!botj`
+"
+
+-f "__Skill Commands and Snippets__|
+__Mark of Shadow Elf: Invisibility__ - `!cc invis -1`
+__Painful Stare__ - `!use pain -t target` or `!use painCrit -t target`
+__Knowledge from Beyond__ - `!knowledge`
+__Eldritch Blitz__ - `!cc blitz -1`
+__Weapon's Kairos__ - `!cc weapon -1` and `!g hp + #` and `!a gunblade rapier sneak -t target` (TEMP)
+__Embodiment of Pride__ - `!use pride`
+__Pride Gaining__ - `!cc pride +1`
+__Bardic Inspiration__ - `!a bardic -t target`
+__Sneak Attack__ - `sneak`
+__Booming Blade__ - `bb`
+__Silver Tongue__ - `silver`
+__Unsettling Words__ - `!a unsettling -t target`
+__Song of Rest__ - `!a rest`
+__Elven Accuracy__ - `eadv`
+"
+-footer "!charStuff shey commands"
