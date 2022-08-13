@@ -220,7 +220,7 @@ for i in range(repeat):
             returnstr += f'\n'
             i = 1
             while i <= threatLevel:
-                shakerollEnforcer = vroll(advroll+shakebonus+sb) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+shakebonus+sb)
+                shakerollEnforcer = vroll(advroll+shakebonus+sb) if pargs.get("withhelp") or pargs.get("sadv") else vroll(defroll+shakebonus+sb)
                 returnstr += f'**Enforcer Shakedown #{i}**: {shakerollEnforcer.full} '
                 if shakerollEnforcer.total >= 16:
                     returnstr += f'Pass! **+25 XP**\n'

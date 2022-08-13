@@ -2,6 +2,7 @@ tembed -title "{{name}} Crime Fights" {{pargs=&ARGS&}} -thumb <image> -color <co
 <drac2>
 # Written By: MrRobinhood5#1999
 # Adjusted By: Kirbyofdeath#7825
+# Adjusted By Again: Stellumine#5554
 
 # Variables for Rank up if enough Eminence is gained
 err_str = ' not found in Server Config. Contact a Dragonspeaker.'
@@ -21,10 +22,12 @@ totalExperience = 0
 coincount, comearning = 0 , 0
 returnstr, me, repeat, defroll, advroll, pas, fail, emgain, em= "", character(), int(pargs.get("rr")[0]) if pargs.get("rr") else 1, "1d20", "2d20kh1", "*PASS*", "*FAIL*", 0, "Eminence"
 mesk, sadv, cadv, dadv, dipadv, wildadv, tadv = character().skills, True if pargs.get("sadv") else False, True if pargs.get("cadv") else False, True if pargs.get("dadv") else False, True if pargs.get("dipadv") else False, True if pargs.get("wildadv") else False, True if pargs.get("tadv") else False
-meint, mestr, medex, mechar, mewis, mepers, meste, medec, meath, meinv, meperc, mesurv, meintim= mesk.intelligence.value, mesk.strength.value, mesk.dexterity.value, mesk.charisma.value, mesk.wisdom.value, mesk.persuasion.value, mesk.stealth.value, mesk.deception.value, mesk.athletics.value, mesk.investigation.value, mesk.perception.value, mesk.survival.value, mesk.intimidation.value
+meint, mestr, medex, mechar, mewis, mepers, meste, medec, meath, meinv, meperc, mesurv, meintim, memed= mesk.intelligence.value, mesk.strength.value, mesk.dexterity.value, mesk.charisma.value, mesk.wisdom.value, mesk.persuasion.value, mesk.stealth.value, mesk.deception.value, mesk.athletics.value, mesk.investigation.value, mesk.perception.value, mesk.survival.value, mesk.intimidation.value, mesk.medicine.value
 scoutb, sb = "+"+str(max(meinv,meperc)), "+"+pargs.get("sb")[0] if pargs.get("sb") else ""
 sd, si, sw = meste, ((meste-medex)+meint), ((meste-medex)+mewis)
 ic, ist, iw = meintim, ((meintim-mechar)+mestr), ((meintim-mechar)+mewis)
+perswis, persint = ((mepers-mechar)+mewis),((mepers-mechar)+meint)
+medint, medcha = ((memed-mewis)+meint),((memed-mewis)+mechar)
 covertb, cb = "+"+str(max(sd,si,sw)), "+"+pargs.get("cb")[0] if pargs.get("cb") else ""
 atst, atde, pech, dech, pewi, dewi, pein, dein = meath, ((meath-mestr)+medex), mepers, medec, ((mepers-mechar)+mewis), ((medec-mechar)+mewis), ((mepers-mechar)+meint), ((medec-mechar)+meint)
 detainb, db = "+"+str(max(atst, atde, pech, dech, pewi, dewi, pein, dein)), "+"+pargs.get("db")[0] if pargs.get("db") else ""
@@ -37,6 +40,9 @@ for i in range(repeat):
   if pargs.get("trooper"):
     intimb, tb = "+"+str(max(ic,ist,iw)), "+"+pargs.get("tb")[0] if pargs.get("tb") else ""
     intimRoll = vroll(advroll+intimb+tb) if tadv else vroll(defroll+intimb+tb)
+  if pargs.get("evangelist"):
+    covertb, tb = "+"+str(max(mepers,perswis,persint)), "+"+pargs.get("cb")[0] if pargs.get("cb") else ""
+    detainb, db = "+"+str(max(memed,medint,medcha)), "+"+pargs.get("db")[0] if pargs.get("db") else ""
 
   scoutroll, covertroll, detainroll, commroll, wildroll, investroll = vroll(advroll+scoutb+sb) if sadv else vroll(defroll+scoutb+sb), vroll(advroll+covertb+cb) if cadv else vroll(defroll+covertb+cb), vroll(advroll+detainb+db) if dadv else vroll(defroll+detainb+db), vroll(advroll+commb) if dipadv else vroll(defroll+commb), vroll(advroll+wildb) if wildadv else vroll(defroll+wildb), vroll(advroll+scoutb) if sadv else vroll(defroll+scoutb)
   if pargs.get("trooper"):
@@ -103,6 +109,12 @@ for i in range(repeat):
     returnstr += f'Wildlife Protector\nSurvival Roll: {wildroll} {"CR5 Monster Part succesfully Confiscated" if monCR else "Monster Part missed"}\n"'
   elif pargs.get("trooper"):
     returnstr += f'City Trooper\n"'
+  elif pargs.get("evangelist"):
+    returnstr += f'Evangelist'
+    if detainroll.total >= 15 and covertroll.total >= 15:
+      returnstr += f'\n{"You Passed both your Covert and Detain Checks, **+100XP**"}\n'
+      totalExperience += 100
+    returnstr += f'\n"'
   else:
     returnstr += f'No Path Chosen\n"'
 
@@ -155,4 +167,4 @@ if level_change:
 
 return returnstr
 </drac2>
--footer "!tag [sadv] [cadv] [dadv] [-sb #] [-cb #] [-db #] [invest] [diplo] [dipadv] [wild] [wildadv] [trooper] [tadv] [-tb #] [-rr #] | XP is added manually | Written by Kirbyofdeath#7825(Rags)"
+-footer "!tag [sadv] [cadv] [dadv] [-sb #] [-cb #] [-db #] [invest] [diplo] [dipadv] [wild] [wildadv] [evangelist] [trooper] [tadv] [-tb #] [-rr #] | XP is added manually | Written by Kirbyofdeath#7825(Rags)"

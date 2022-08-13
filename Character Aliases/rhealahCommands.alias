@@ -26,5 +26,6 @@ __Shield Brothers__ - `!cast Warding Bond -t target -i` and `!cc Shield -1`
 __Hexblade's Curse__ - `!cc hexblade -1` and `hexblade`
 __Hex__ - `!hex -t target -score abilityScore` and `hex`
 __Angelic Blood__ - `!use angelic -t target`
+__Eldritch Blade__ - `eb`
 "
 -footer "!charStuff rhea commands"
