@@ -1,0 +1,29 @@
+embed
+<drac2>
+cc1= "Bloodwell Vial"
+cc2="Sorcery Points"
+rest = "You cannot use this feature again until you finish a long rest."
+noCC = "You do not have this item."
+ch=character()
+desc = f"Regain 5 sorc points when you spend hit die. You can use this ability once per day."
+
+succ = "tries to use"
+if ch.cc_exists(cc1) and ch.get_cc(cc1) and ch.cc_exists(cc2):
+    succ = "uses"
+    ch.mod_cc(cc1, -1)
+    ch.mod_cc(cc2, +5)
+    D = desc
+    F = f"{cc1}|{ch.cc_str(cc1) if ch.cc_exists(cc1) else '*None*'}\n**{cc2}**\n{ch.cc_str(cc2)}"
+elif ch.cc_exists(cc1):
+    D = rest
+    F = f"{cc1} | {ch.cc_str(cc1)} \n**{cc2}**\n{ch.cc_str(cc2)}"
+else:
+    D = noCC
+    F = "*None*"
+
+T = f"{name} {succ} {cc1}!"
+
+</drac2>
+-title "{{T}}"
+-desc "{{D}}"
+-f "{{F}}"
