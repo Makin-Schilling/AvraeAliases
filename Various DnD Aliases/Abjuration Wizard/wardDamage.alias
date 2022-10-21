@@ -1,0 +1,37 @@
+tembed -title "{{name}} absorbs the damage with their Arcane Ward!"
+-desc "Whenever you take damage, the ward takes the damage instead. If this damage reduces the ward to 0 hit points, you take any remaining damage."
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+args, returnstr, me = &ARGS&,  f'', character()
+
+damage = int(args[0])
+ward = me.get_cc("Arcane Ward - Hit Points")
+startHP = me.hp_str()
+
+if ward-damage >= 0:
+    me.mod_cc("Arcane Ward - Hit Points", -damage)
+    if (me.hp+damage <= me.max_hp):
+        me.modify_hp(+damage, False, False)
+    else:
+        overflow = (me.hp+damage) - me.max_hp
+        me.modify_hp(damage-overflow, False, False)
+        me.set_temp_hp(me.temp_hp+overflow)
+else:
+    me.mod_cc("Arcane Ward - Hit Points", -damage)
+    if (me.hp+ward <= me.max_hp):
+        me.modify_hp(+ward, False, False)
+    else:
+        overflow = (me.hp+ward) - me.max_hp
+        me.modify_hp(ward-overflow, False, False)
+        me.set_temp_hp(me.temp_hp+overflow)
+
+returnstr += f' -f "Damage Taken|{damage} Damage ({ward if ward-damage <= 0 else damage} Warded)"'
+returnstr += f' -f "Remaining Ward HP|{me.cc_str("Arcane Ward - Hit Points")}(-{ward if ward-damage <= 0 else damage})"'
+returnstr += f' -f "{name} HP|{startHP} -> {me.hp_str()}"'
+
+return returnstr
+</drac2>
+-footer "!ward for help | Alias by Stellumine#5554, modified from I love Pie"

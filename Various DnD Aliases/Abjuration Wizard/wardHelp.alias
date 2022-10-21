@@ -1,0 +1,10 @@
+tembed
+-title "Arcane Ward: Help and Commands"
+-desc "This alias helps an abjuration wizard manage their arcane ward HP without dipping into Temp HP
+
+To use this alias you need a counter called `Arcane Ward`. To obtain thic CC, you can run the `!level` alias by `Derixylth#0636` or create the counter yourself using this command `!cc 'Arcane Ward' -max 1 -type bubble -reset long`"
+-f "Valid Arguments|`start` creates the arcane ward and set it's hp. 
+`-d #` allows you to replenish your HP and Temp HP and remove damage from the Arcane Ward. If you use it with `-t target` it will use the Projected Ward feature instead.
+`-l #` replenishes the Arcane's Ward HP based on the level of the slot used, and shows the amount of slots you have left."
+-footer "!ward for help | Alias by Stellumine#5554, modified from I love Pie"
+

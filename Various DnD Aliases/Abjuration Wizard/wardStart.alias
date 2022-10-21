@@ -1,0 +1,29 @@
+tembed -title "{{name}} creates an Arcane Ward!"
+-desc "When you cast an abjuration spell of 1st level or higher, you can simultaneously use a strand of its Abjuration magic to create a magical ward on yourself that lasts until you finish a long rest. The ward has 7 hit points. Whenever you take damage, the ward takes the damage instead. If this damage reduces the ward to 0 hit points, you take any remaining damage."
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+
+#set/modify arcane ward and arcane ward health cc
+if me.cc_exists("Arcane Ward"):
+    #set the ward size
+    wardMax = (2*WizardLevel)+intelligenceMod
+
+    #create and modify arcane ward hp
+    me.create_cc_nx("Arcane Ward - Hit Points", 0, wardMax, "long", None, 0, None, None, None,wardMax)
+    me.edit_cc("Arcane Ward - Hit Points", 0, wardMax)
+    me.mod_cc("Arcane Ward",-1)
+    me.set_cc("Arcane Ward - Hit Points", wardMax)
+
+    #output the ccs
+    returnstr += f' -f "Arcane Ward|{me.cc_str("Arcane Ward")}(-1)"'
+    returnstr += f' -f "Ward HP|{me.cc_str("Arcane Ward - Hit Points")}(+{wardMax})"'
+else:
+    returnstr += f' -f "{name} does not have an Arcane Ward set up|Run `!ward` for help setting up your Arcane Ward"'
+return returnstr
+</drac2>
+-footer "!ward for help | Alias by Stellumine#5554, modified from I love Pie"

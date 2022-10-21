@@ -1,0 +1,22 @@
+tembed -title "{{name}} patches up their Arcane Ward!"
+-desc "Whenever you cast an abjuration spell of 1st level or higher, the ward regains a number of hit points equal to twice the level of the spell"
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+args, returnstr, me = &ARGS&,  f'', character()
+level = int(args[0])
+healing = level*2
+ward = me.get_cc("Arcane Ward - Hit Points")
+wardMax = me.get_cc_max("Arcane Ward - Hit Points")
+
+me.mod_cc("Arcane Ward - Hit Points", +healing)
+
+returnstr += f' -f "Ward HP|{me.cc_str("Arcane Ward - Hit Points")}(+{healing if healing + ward <= wardMax else (healing+ward)-wardMax})"'
+returnstr += f' -f "Level {level} Spell Slots|{me.spellbook.slots_str(level)}"'
+
+return returnstr
+</drac2>
+-footer "!ward for help | Alias by Stellumine#5554, modified from I love Pie"
