@@ -1,0 +1,11 @@
+!alias crystal tembed -title "{{name}} uses a Crystal Blade Charge" {{pargs=argparse(&ARGS&)}}
+<drac2>
+args, returnstr, me = &ARGS&, f'', character()
+
+if me.cc_exists("Crystal Blade") and me.get_cc("Crystal Blade") >= 1:
+    me.mod_cc("Crystal Blade", -1)
+    me.modify_hp(+int(args[0]), False, False)
+    returnstr += f' -f "Crystal Blade Charges|{me.cc_str("Crystal Blade")}(-1)"'
+    returnstr += f' -f "{name} HP|{me.hp_str()}(+{args[0]})"'
+return returnstr
+</drac2>
