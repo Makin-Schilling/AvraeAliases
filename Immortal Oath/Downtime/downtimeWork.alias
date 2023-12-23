@@ -1,0 +1,67 @@
+tembed -title "**Work DT**" -thumb <image> -color <color>
+<drac2>
+# Written by @Stellumine
+
+# Setting Primary Variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+
+# Setting Modding Variables
+coincount = 0
+
+# Setting Rolls
+defroll, advroll, disroll, realRoll = "1d20+","2d20kh1+", "2d20kl1+", ""
+
+# Setting Skills
+meint, medex, mestr, mewis = me.skills.intelligence.value, me.skills.dexterity.value, me.skills.strength.value, me.skills.wisdom.value
+
+# Setting Skill Bonuses
+workBonus = str(max(meint, mewis, mestr, medex))
+b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+
+# Start Making Output Pretty
+returnstr += f'-desc "For working and maintaining a profession you can make an intelligence, wisdom, strength, or dexterity check and your earnings are determined on the roll.\n ◽ 9 or lower: 5 gp\n ◽ 10-14: 15gp\n ◽ 15-20: 25gp\n ◽ 21+: 40gp.\nThis takes one downtime slot"'
+
+# Start Reroll loop
+for i in range(repeat):
+    # Start Loop Output
+    returnstr += f' -f "Roll #{i+1}|'
+
+    # Set up Work Roll
+    if pargs.get("adv"):
+        realRoll = advroll
+    elif pargs.get("dis"):
+        realRoll = disroll
+    else:
+        realRoll = defroll
+    workRoll = vroll(realRoll+workBonus+b)
+
+    # Check Passes and Output Results
+    returnstr += f'{workRoll.full}\n'
+    if workRoll.total >= 21:
+        returnstr += f'Coins Gained: `40` gp'
+        coincount += 40
+    elif workRoll.total >= 15:
+        returnstr += f'Coins Gained: `25` gp'
+        coincount += 25
+    elif workRoll.total >= 10:
+        returnstr += f'Coins Gained: `15` gp'
+        coincount += 15
+    else:
+        returnstr += f'Coins Gained: `5` gp'
+        coincount += 5
+
+    returnstr += f'"'
+
+#Modifies the character coin count
+ocp = me.coinpurse.total # the string of the original coinpurse, for output purposes
+ogp = me.coinpurse["gp"] # grabs original gold count
+me.coinpurse.modify_coins(gp = coincount) # modifies gp count by the coin count
+
+#Output original and updated coin count 
+returnstr += f' -f "Total Coin Earned|`{coincount}` gp"'
+returnstr += f' -f "Earnings, Added Automatically|`{ocp}` -> `{me.coinpurse.total}` gp"'
+
+return returnstr
+</drac2>
+-footer "!dt work [adv] [dis] [-b #] [-rr #] | Written by Stellumine"

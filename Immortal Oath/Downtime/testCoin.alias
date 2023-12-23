@@ -1,0 +1,17 @@
+tembed -title "**Coin Test**" -thumb <image> -color <color>
+
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+#Modifies the character coin count
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+ocp = me.coinpurse.total # the string of the original coinpurse, for output purposes
+ogp = me.coinpurse["gp"] # grabs original gold count
+coincount = 10 # change this as necessary
+me.coinpurse.modify_coins(gp = coincount) # modifies gp count by the coin count
+
+#Output original and updated coin count 
+returnstr += f' -f "Total Coin Earned|`{coincount}`"'
+returnstr += f' -f "Earnings, Added Automatically|`{ocp}` -> `{me.coinpurse.total}`"'
+
+return returnstr
+</drac2>
