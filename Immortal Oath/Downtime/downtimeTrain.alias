@@ -1,0 +1,96 @@
+tembed -title "**Training DT**" -thumb <image> -color <color>
+<drac2>
+# Written by @Stellumine
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me = argparse(args[3:]),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+if len(args) < 3: # Checks to make sure there is at least 3 arguments
+    err("Not enough arguments - See `!help dt train`")
+    
+# Setting CCs and Modding Variables
+me.create_cc_nx("Training", 0, 20, None, None)
+if me.get_cc("Training") == 20:
+    me.set_cc("Training", 0)
+oTraining = me.get_cc("Training")
+trainingCount = 0
+
+# Setting Skills and Bonuses
+possibleSkills = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
+skillUsed = ''
+trainingBonus = 0
+skillUsed=[skill_name for skill_name in possibleSkills if args[2].lower() in skill_name.lower()]
+skillUsed[0] if len(skillUsed) > 0 else err("Invalid Skill - See `!help dt train`")
+
+if skillUsed[0] == 'strength':
+    trainingBonus = me.skills.strength.value
+elif skillUsed[0] == 'dexterity':  
+    trainingBonus = me.skills.dexterity.value
+elif skillUsed[0] == 'constitution':  
+    trainingBonus = me.skills.constitution.value
+elif skillUsed[0] == 'intelligence':  
+    trainingBonus = me.skills.intelligence.value
+elif skillUsed[0] == 'wisdom':  
+    trainingBonus = me.skills.wisdom.value
+else:
+    trainingBonus = me.skills.charisma.value
+
+b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+
+# Setting Rolls
+defroll, advroll, disroll, realroll = "1d20+","2d20kh1+", "2d20kl1+", ""
+if pargs.get("adv") or pargs.get("mentor"):
+    realroll = advroll
+    if pargs.get("mentor") and pargs.get("dis"):
+        realroll = defroll
+elif pargs.get("dis"):
+    realroll = disroll
+else:
+    realroll = defroll
+
+# Final Roll String
+trainingRollString = realroll+str(trainingBonus)+b
+
+# Start Initial Output
+returnstr += f' -f "**Character:** {name}\n**Date(s):** {args[0]}\n**Training:** {args[1]}\n**Checking:** {args[2]}\n'
+returnstr += f'**Mentor:** {pargs.get("mentor")[0]} "' if pargs.get("mentor") else f'"'
+
+# Start Loop
+for i in range(repeat):
+    returnstr += f' -f "Training Roll #{i+1}|'
+
+    # Roll the Dice
+    trainingRoll = vroll(trainingRollString)
+
+    # Prepare Output
+    returnstr += f'{trainingRoll.full}\n'
+    if trainingRoll.total >= 10:
+        if trainingRoll.result.crit == 1:
+            returnstr += f'**CRIT PASSED**\n'
+            me.mod_cc("Training", +4) if pargs.get("mentor") else me.mod_cc("Training", +2)
+            trainingCount += 4 if pargs.get("mentor") else 2
+        else:
+            returnstr += f'**PASSED**\n'
+            me.mod_cc("Training", +2) if pargs.get("mentor") else me.mod_cc("Training", +1)
+            trainingCount += 2 if pargs.get("mentor") else 1
+    else:
+        if trainingRoll.result.crit == 2:
+            returnstr += f'**CRIT FAILED**\n'
+            me.mod_cc("Training", -1)
+            trainingCount = trainingCount - 1 if oTraining+trainingCount >=0 else trainingCount
+        else:
+            returnstr += f'**FAILED**\n'
+
+    #Stop rerolls if they complete training
+    if oTraining+trainingCount >= 20:
+        returnstr += f'{name} has finished training {args[1]}!\n"'
+        break
+    returnstr += f'"'
+
+# Final Return String
+returnstr += f' -f "Training Progress|{me.cc_str("Training")}({"+" if trainingCount >0 else ""}{trainingCount})"' 
+
+return returnstr
+</drac2>
+-footer "!dt train < date / range > < item / feat > < ability used > [-b #] [adv] [dis] [-mentor \"name\"] [-rr #]| Written by @Stellumine"
