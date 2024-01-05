@@ -20,7 +20,7 @@ workBonus = str(max(meint, mewis, mestr, medex))
 b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
 
 # Start Making Output Pretty
-returnstr += f'-desc "For working and maintaining a profession you can make an intelligence, wisdom, strength, or dexterity check and your earnings are determined on the roll.\n ◽ 9 or lower: 5 gp\n ◽ 10-14: 15gp\n ◽ 15-20: 25gp\n ◽ 21+: 40gp.\nThis takes one downtime slot"'
+returnstr += f'-f "{name} is Working|For working and maintaining a profession you can make an intelligence, wisdom, strength, or dexterity check and your earnings are determined on the roll.\n ◽ 9 or lower: 5 gp\n ◽ 10-14: 15gp\n ◽ 15-20: 25gp\n ◽ 21+: 40gp.\nThis takes one downtime slot"'
 
 # Start Reroll loop
 for i in range(repeat):

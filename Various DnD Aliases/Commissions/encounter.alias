@@ -1,0 +1,27 @@
+tembed -title "**Random Encounter Generator**" -thumb <image> -color <color>
+<drac2>
+# Written by Stellumine
+
+#set controversy gvar and split
+encounters = get_gvar("5f930785-41bf-4c59-838d-dee778cc563c")
+splitEncounters = [encounters.split("\n")]
+
+#set Primary Variables
+args=&ARGS&
+pargs, returnstr = argparse(args),  f''
+
+#logic
+encounterDice = "d"+str(len(splitEncounters))
+rolledEncounter = vroll(encounterDice)
+
+returnstr += f' -f "'
+for x in splitEncounters:
+    returnstr += f'{x}\n'
+returnstr += f'"'
+
+returnstr += f' -f "Dice Rolled|{rolledEncounter.full}"'
+returnstr += f' -f "Random Encounter|{splitEncounters[rolledEncounter.total-1]}"'
+
+return returnstr
+</drac2>
+-footer "!encounter | Written by @Stellumine"
