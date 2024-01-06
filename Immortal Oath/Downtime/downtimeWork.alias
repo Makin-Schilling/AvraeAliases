@@ -3,6 +3,7 @@ tembed -title "**Work DT**" -thumb <image> -color <color>
 # Written by @Stellumine
 
 # Setting Primary Variables
+args=&ARGS&
 pargs, returnstr, me = argparse(&ARGS&),  f'', character()
 repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
 

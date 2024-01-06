@@ -1,0 +1,100 @@
+tembed -title "**Hunt DT**" -thumb <image> -color <color>
+<drac2>
+# Written by @Stellumine
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+if len(args) < 1: # Checks to make sure there is at least 1 argument
+    err("Not enough arguments - See `!help dt hunt`")
+
+# Setting Rolls
+defroll, advroll, disroll, realRoll = "1d20+","2d20kh1+", "2d20kl1+", ""
+
+# Setting Skills
+meattack = me.skills.strength.value+me.stats.prof_bonus if me.skills.strength.value > me.skills.dexterity.value else me.skills.dexterity.value+me.stats.prof_bonus
+killBonus = str(meattack)
+possibleSkills = ['nature', 'survival', 'investigation']
+skillUsed = ''
+huntBonus = 0
+skillUsed=[skill_name for skill_name in possibleSkills if args[0].lower() in skill_name.lower()]
+skillUsed[0] if len(skillUsed) > 0 else err("Invalid Skill - See `!help dt hunt`")
+
+if skillUsed[0] == 'nature':
+    huntBonus = me.skills.nature.value
+elif skillUsed[0] == 'survival':  
+    huntBonus = me.skills.survival.value
+else:  
+    huntBonus = me.skills.investigation.value
+
+
+# Setting Skill Bonuses
+b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+kb = "+"+pargs.join('kb', '+') if pargs.get("kb") else ""
+
+# Start Making Output Pretty
+returnstr += f'-f "{name} is Hunting|Hunting for monster parts for selling or crafting.\nMake a nature, Survival, or Investigation check. The Below DCs will determine the creature being hunted and the DC to make your attacks against.\n ◽ 9 or lower: No Creature Found\n ◽ 10-14: Small Creature (CR 1-3) \n ◽ 15-19: Medium Creature (CR 4-8)\n ◽ 20+: Large (CR 9-12).\nThis takes 2 downtime slots"'
+
+# Start Reroll loop
+for i in range(repeat):
+    #Loop Variables
+    attackDC = 0
+    attackString = ''
+    # Start Loop Output
+    returnstr += f' -f "Attempt #{i+1}|'
+
+    # Set up search Roll
+    if pargs.get("adv"):
+        realRoll = advroll
+    elif pargs.get("dis"):
+        realRoll = disroll
+    else:
+        realRoll = defroll
+    huntRoll = vroll(realRoll+huntBonus+b)
+
+    # Check Passes and Output Results
+    returnstr += f'{huntRoll.full}\n'
+    if huntRoll.total >= 20:
+        returnstr += f'You Found a Large Creature! DC = 20\n'
+        attackDC = 20
+        attackString = 'Large Monster Part (CR 9-12)'
+    elif huntRoll.total >= 15:
+        returnstr += f'You Found a Medium Creature! DC = 15\n'
+        attackDC = 15
+        attackString = 'Medium Monster Part (CR 4-8)'
+    elif huntRoll.total >= 10:
+        returnstr += f'You Found a Small Creature! DC = 10\n'
+        attackDC = 10
+        attackString = 'Small Monster Part (CR 1-3)'
+    else:
+        returnstr += f'You did not find a creature this time\n"'
+        continue
+
+    #set kill rolls
+    if pargs.get("kadv"):
+        killRoll1 = vroll(advroll+killBonus+kb)
+        killRoll2 = vroll(advroll+killBonus+kb)
+    elif pargs.get("kdis"): 
+        killRoll1 = vroll(disroll+killBonus+kb)
+        killRoll2 = vroll(disroll+killBonus+kb)
+    else:
+        killRoll1 = vroll(defroll+killBonus+kb)
+        killRoll2 = vroll(defroll+killBonus+kb)
+
+    #output Kill Rolls
+    returnstr += f'**Killshot Rolls**: \nAttack 1: {killRoll1.full}\nAttack 2: {killRoll2.full}\n'
+
+    if killRoll1.total >= attackDC and killRoll2.total >= attackDC:
+        returnstr += f'You have Successfully taken down a beast, you gain `1 {attackString}`!\n'
+    else:
+        returnstr += f'You missed one or both your attacks and the beast escaped\n"'
+        continue
+    returnstr += f'"'
+
+    # loot outtput
+    returnstr += f" -f 'Loot for Attempt #{i+1}|Add 1 `{attackString}` to your bag using `!bag \"Monster Parts\" + \"{attackString}\"`'"
+
+return returnstr
+</drac2>
+-footer "!dt hunt < ability used > [adv] [kadv] [dis] [kdis] [-b #] [-kb #] [-rr #] | Written by Stellumine"

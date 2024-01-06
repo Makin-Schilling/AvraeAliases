@@ -1,0 +1,120 @@
+tembed -title "**Craft DT**" -thumb <image> -color <color>
+<drac2>
+# Written by @Stellumine
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+repeat = int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+if len(args) < 3: # Checks to make sure there is at least 1 argument
+    err("Not enough arguments - See `!help dt craft`")
+
+skillDC, cost, successes, rarity = 0, 0, 0, '' #crafting variables
+
+# Start Initial Output
+returnstr += f' -f "**Character:** {name}\n**Item Name:** {args[2]}\n**Item rarity:** {args[0]}\n**Tool Used:** {args[1]}\n"'
+
+# Setting CCs and Modding Variables
+rarityInput = args[0]
+possibleRarity = ['common', 'uncommon', 'rare']
+itemRarity = [rarity for rarity in possibleRarity if args[0].lower() in rarity.lower()]
+itemRarity[0] if len(itemRarity) > 0 else err("Invalid Rarity - See `!help dt craft`")
+rarity = itemRarity[0]
+
+if rarity == 'common':
+    skillDC = 10
+    cost = 15
+    successes = 2
+elif rarity == 'uncommon':
+    skillDC = 15
+    cost = 35
+    successes = 4
+else:
+    skillDC = 20
+    cost = 100
+    successes = 20
+
+if me.cc_exists("Crafting"):
+    if me.get_cc_max("Crafting") == me.get_cc("Crafting"):
+        returnstr += f' -f "Crafting is Complete|Starting New {rarity} item"'
+        me.create_cc("Crafting", 0, successes, None, None)
+        me.set_cc("Crafting", 0)
+    else:
+        returnstr += f' -f "Continuing Crafting|{rarity} item"'
+else:
+    returnstr += f' -f "Starting Crafting|{rarity} item"'
+    me.create_cc("Crafting", 0, successes, None, None)
+    me.set_cc("Crafting", 0)
+
+oCrafting = me.get_cc("Crafting")
+craftingCount = 0
+coincount = 0
+ocp = me.coinpurse.total
+
+# Setting Rolls
+defroll, advroll, disroll, toolRoll, aRoll = "1d20+","2d20kh1+", "2d20kl1+", "", ""
+if pargs.get("aadv"): #arcana roll
+    aRoll = advroll
+elif pargs.get("adis"):
+    aRoll = disroll
+else:
+    aRoll = defroll
+
+if pargs.get("tadv"): #tool roll
+    toolRoll = advroll
+elif pargs.get("tdis"):
+    toolRoll = disroll
+else:
+    toolRoll = defroll
+
+# Setting Skills and Bonuses
+toolBonus, mearc = me.skills.dexterity.value+me.stats.prof_bonus, me.skills.arcana.bonus
+
+ab = "+"+pargs.join('ab', '+') if pargs.get("ab") else ""
+tb = "+"+pargs.join('tb', '+') if pargs.get("tb") else ""
+
+# Final Roll Strings
+toolRollString = toolRoll+str(toolBonus)+tb
+aRollString = aRoll+str(mearc)+ab
+
+# Start Loop
+for i in range(repeat):
+    if ocp+coincount-cost >= 0: # making sure there is enough gold
+        returnstr += f' -f "Crafting Roll #{i+1}|'
+
+        # Roll the Dice
+        arcanaRoll = vroll(aRollString)
+        toolRollFinal = vroll(toolRollString)
+
+        # Prepare Output
+        returnstr += f'{arcanaRoll.full}\n{toolRollFinal.full}\n'
+        if arcanaRoll.total >= skillDC and toolRollFinal.total >= skillDC:
+            returnstr += f'**Success!**'
+            coincount -= cost
+            craftingCount += 1
+            me.mod_cc("Crafting", +1)
+        else:
+            returnstr += f'**Failure**'
+
+        #checking if crafting complete
+        if oCrafting+craftingCount >= me.get_cc_max("Crafting"):
+            returnstr += f'\n{name} has finished crafting {args[2]}!\n"'
+            break
+        
+        returnstr += f'"'
+    else:
+        returnstr += f' -f "Crafting Roll #{i+1}: {name} is out of money|Earn some more and come back"'
+        break
+
+#Modifies the character coin count
+ogp = me.coinpurse["gp"] # grabs original gold count
+me.coinpurse.modify_coins(gp = coincount) # modifies gp count by the coin count
+
+# Final Return Strings
+returnstr += f' -f "Crafting Progress|{me.cc_str("Crafting")}({"+" if craftingCount >0 else ""}{craftingCount})"' 
+returnstr += f' -f "Total Coin Spent|`{coincount}` gp"'
+returnstr += f' -f "Coin Purse|`{ocp}` -> `{me.coinpurse.total}` gp"'
+
+return returnstr
+</drac2>
+-footer "!dt craft < item rarity > < tool used > < Item Name >[aadv] [tadv] [adis] [tdis] [-ab #] [-tb #] [-rr #] | Written by Stellumine"
