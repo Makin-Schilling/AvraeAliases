@@ -117,4 +117,4 @@ returnstr += f' -f "Coin Purse|`{ocp}` -> `{me.coinpurse.total}` gp"'
 
 return returnstr
 </drac2>
--footer "!dt craft < item rarity > < tool used > < Item Name >[aadv] [tadv] [adis] [tdis] [-ab #] [-tb #] [-rr #] | Written by Stellumine"
+-footer "!dt craft < item rarity > < tool used > < item name >[aadv] [tadv] [adis] [tdis] [-ab #] [-tb #] [-rr #] | Written by Stellumine"

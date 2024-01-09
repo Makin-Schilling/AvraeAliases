@@ -1,0 +1,198 @@
+tembed -title "{{name}} tries to play the Fame Game" -desc "Requires 2 Downtime Slots" -thumb <image> -color <color>
+{{pargs=argparse(&ARGS&)}}
+<drac2>
+#Written by Stellumine#5554
+
+#sets primary variables
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+
+#set all rolls
+defroll,advroll, defaultgp, extragp= "1d20+","2d20kh1+", "1d20", "d10"
+
+#set modifiers
+oFame, fameAdd, oCont, contAdd, coincount, roundcoin, repeat = 0, 0, 0, 0, 0, 0, int(pargs.get("rr")[0]) if pargs.get("rr") else 1
+
+#get current fame and controversy
+if me.cc_exists("Fame") == False:
+    me.create_cc_nx("Fame", 0, 50, None, None)  # makes sure they got a Fame Counter
+    me.mod_cc("Fame", -50) #set Fame to 0
+if me.cc_exists("Controversy") == False:
+    me.create_cc_nx("Controversy", 0, 10, None, None)  # makes sure they got a controversy Counter
+    me.mod_cc("Controversy", -10) #set controversy to 0
+oFame, oCont = me.get_cc("Fame"), me.get_cc("Controversy")
+
+#set controversy gvar and split
+contOptions = get_gvar("24dcc927-a4e5-4aa0-b02c-d6fb4d450f1c")
+splitOptions = [x.split("\n") for x in contOptions.split("\n\n")]
+
+#Now set up the roll modifiers
+mecha, meint, mewis, medex = me.skills.charisma.value, me.skills.intelligence.value, me.skills.wisdom.value, me.skills.dexterity.value
+medec, mepers, meinsi = me.skills.deception.value, me.skills.persuasion.value, me.skills.insight.value
+merel, mehis, menat = me.skills.religion.value, me.skills.history.value, me.skills.nature.value
+meperf, meinves = me.skills.performance.value, me.skills.investigation.value
+
+#Marketing mods
+medecwis, medecint = ((medec-mecha)+mewis), ((medec-mecha)+meint) #set deception mental stats
+meperswis, mepersint = ((mepers-mecha)+mewis), ((mepers-mecha)+meint) #set persuasion metal stats
+meinsicha, meinsiint = ((meinsi-mewis)+mecha), ((meinsi-mewis)+meint) #set insight mental stats
+marketBonus = str(max(medec,mepers,meinsi,medecint,medecwis,mepersint,meperswis,meinsicha,meinsiint))
+mb = "+"+pargs.join('mb', '+') if pargs.get("mb") else ""
+
+#Preperation mods
+merelwis, merelcha = ((merel-meint)+mewis), ((merel-meint)+mecha) #set religion mental stats
+mehiswis, mehischa = ((mehis-meint)+mewis), ((mehis-meint)+mecha) #set history mental stats
+menatwis, menatcha = ((menat-meint)+mewis), ((menat-meint)+mecha) #set nature mental stats
+prepBonus = str(max(merel,mehis,menat,merelcha,merelwis,mehischa,mehiswis,menatcha,menatwis))
+pb = "+"+pargs.join('pb', '+') if pargs.get("pb") else ""
+
+#Execution mods
+meperfwis, meperfint, meperfdex = ((meperf-mecha)+mewis), ((meperf-mecha)+meint), ((meperf-mecha)+medex) #set perfomance mental stats + dex
+meinveswis, meinvescha = ((meinves-meint)+mewis), ((meinves-meint)+mecha) #set investigation mental stats
+executeBonus = str(max(meperf,meinves,meinsi,meperfdex,meperfint,meperfwis,meinvescha,meinveswis,meinsicha,meinsiint))
+eb = "+"+pargs.join('eb', '+') if pargs.get("eb") else ""
+eb2 = ""
+if max(meinsi,meinsicha,meinsiint) > max(meperfdex,meperfint,meperfwis,meperf) and max(meinsi,meinsicha,meinsiint) > max(meinves,meinvescha,meinveswis):
+    eb2 = "+"+str(mewis)
+elif max(meperfdex,meperfint,meperfwis,meperf) > max(meinsi,meinsicha,meinsiint) and max(meperfdex,meperfint,meperfwis,meperf) > max(meinves,meinvescha,meinveswis):
+    eb2 = "+"+str(mecha)
+elif max(meinves,meinvescha,meinveswis) > max(meinsi,meinsicha,meinsiint) and max(meinves,meinvescha,meinveswis) > max(meperfdex,meperfint,meperfwis,meperf):
+    eb2 = "+"+str(meint)
+else:
+    eb2 = "+"+str(max(meint, mewis, mecha))
+
+pb2 = ""
+eb3 = ""
+mb2 = ""
+
+#now we start the loop
+for i in range(repeat):
+    #reset variables
+    roundcoin = 0
+    roundfails = 0
+
+    #make the scaling dc
+    DC = 15+(me.get_cc("Fame")//10)
+
+    #controversy checks setup
+    if me.get_cc("Controversy") >= 4 and me.get_cc("Controversy") < 6:
+        pb2 = "-5"
+        eb3 = "-5"
+        mb2 = "-5"
+    elif me.get_cc("Controversy") >= 2 and me.get_cc("Controversy") < 4:
+        mb2 = "-5"
+
+    #roll the dice
+    marketRoll = vroll(advroll+marketBonus+mb+mb2) if pargs.get("withhelp") or pargs.get("madv") else vroll(defroll+marketBonus+mb+mb2)
+    prepRoll = vroll(advroll+prepBonus+pb+pb2) if pargs.get("withhelp") or pargs.get("padv") else vroll(defroll+prepBonus+pb+pb2)
+    executeRoll = vroll(advroll+executeBonus+eb+eb2+eb3) if pargs.get("withhelp") or pargs.get("eadv") else vroll(defroll+executeBonus+eb+eb2+eb3)
+
+    #output results
+    returnstr += f' -f "Attempt #{i+1}|\nDC: **{DC}**\n'
+
+    returnstr += f'**Marketing Roll**: {marketRoll.full} '
+    if marketRoll.total >= DC:
+        returnstr += f'(You Passed! **+1 Fame**)\n'
+        me.mod_cc("Fame", +1)
+        fameAdd += 1
+        if me.get_cc("Controversy") < 6 or me.get_cc("Controversy") >=8:
+            nowextra = str(int(me.get_cc("Fame")/5)) + extragp if int(me.get_cc("Fame")/5) != 0 else "0"
+        else:
+            nowextra = str(int(me.get_cc("Fame")/5)-1) + extragp
+        earningsBonus = defaultgp + "+" + nowextra
+        earningsRoll = vroll(earningsBonus)
+        returnstr += f' - **Earnings**: {earningsRoll.full}\n'
+        roundcoin += earningsRoll.total
+    else:
+        returnstr += f'(You Failed)\n'
+        roundfails += 1
+
+    returnstr += f'**Perparation Roll**: {prepRoll.full} '
+    if prepRoll.total >= DC:
+        returnstr += f'(You Passed! **+1 Fame**)\n'
+        me.mod_cc("Fame", +1)
+        fameAdd += 1
+        if me.get_cc("Controversy") < 6 or me.get_cc("Controversy") >=8:
+            nowextra = str(int(me.get_cc("Fame")/5)) + extragp if int(me.get_cc("Fame")/5) != 0 else "0"
+        else:
+            nowextra = str(int(me.get_cc("Fame")/5)-1) + extragp
+        earningsBonus = defaultgp + "+" + nowextra
+        earningsRoll = vroll(earningsBonus)
+        returnstr += f' - **Earnings**: {earningsRoll.full}\n'
+        roundcoin += earningsRoll.total
+    else:
+        returnstr += f'(You Failed)\n'
+        roundfails += 1
+    
+    returnstr += f'**Execution Roll**: {executeRoll.full} '
+    if executeRoll.total >= DC:
+        returnstr += f'(You Passed! **+1 Fame**)\n'
+        me.mod_cc("Fame", +1)
+        fameAdd += 1
+        if me.get_cc("Controversy") < 6 or me.get_cc("Controversy") >= 8:
+            nowextra = str(int(me.get_cc("Fame")/5)) + extragp if int(me.get_cc("Fame")/5) != 0 else "0"
+        else:
+            nowextra = str(int(me.get_cc("Fame")/5)-1) + extragp 
+        earningsBonus = defaultgp + "+" + nowextra
+        earningsRoll = vroll(earningsBonus)
+        returnstr += f' - **Earnings**: {earningsRoll.full}\n'
+        roundcoin += earningsRoll.total
+    else:
+        returnstr += f'(You Failed)\n'
+        roundfails += 1
+
+    returnstr += f'__Total Coin__: {roundcoin}\n'
+    coincount += roundcoin
+
+    for x in range(roundfails):
+        contRoll = vroll("1d20")
+        returnstr += f'\n**Controversy Roll {x+1}**: {contRoll.full}\n'
+        if contRoll.total == 20:
+            me.mod_cc("Controversy", -1)
+            contAdd = contAdd -1
+            returnstr += splitOptions[1][roll(len(splitOptions[1])-1)]
+            returnstr += f' **-1 Controversy**\n'
+            if me.get_cc("Controversy") < 10:
+                me.edit_cc("Fame",maxVal=50)
+        elif contRoll.total == 1:
+            me.mod_cc("Controversy", +2)
+            contAdd += 2
+            returnstr += splitOptions[2][roll(len(splitOptions[1])-1)]
+            returnstr += f' **+2 Controversy**\n'
+        elif contRoll.total < 5:
+            me.mod_cc("Controversy", +1)
+            contAdd += 1
+            returnstr += splitOptions[0][roll(len(splitOptions[1])-1)]
+            returnstr += f' **+1 Controversy**\n'
+
+
+    if me.get_cc("Controversy") == 8 and oCont != 8:
+        currentFame = int(me.get_cc("Fame")/2)
+        me.mod_cc("Fame", -currentFame)
+        fameAdd = fameAdd - currentFame
+    elif me.get_cc("Controversy") == 10:
+        me.edit_cc("Fame",maxVal=30)
+    returnstr += f'"\n'
+
+#Do Coin Things
+ngp = int(coincount)
+nsp = (coincount - ngp)*10
+ncp = int((nsp-int(nsp))*10)
+nsp = int(nsp)
+bagsLoaded=load_json(bags) #load the bags
+# Error check for Coin Pouch
+if "Coin Pouch" not in str(bagsLoaded):
+  return f' -f "Error|You do NOT have a coin pouch. Go make one with `!coins` and come back to crime." -t 120'
+pouch=([x for x in bagsLoaded if x[0]=="Coin Pouch"])[0] #load the coinpouch
+ogp = pouch[1]['gp'] # what gp was before?
+pouch[1].update({'gp':pouch[1]['gp']+ngp, 'sp':pouch[1]['sp']+nsp, 'cp':pouch[1]['cp']+ncp}) #updates new quantities locally
+pouch in bagsLoaded or bagsLoaded.append(pouch)
+me.set_cvar("bags",dump_json(bagsLoaded))#dumps the coins back to the cvar
+
+if me.get_cc("Controversy") <10:
+    returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Fame: `{oFame}` -> `{oFame+fameAdd if oFame+fameAdd <=50 else 50}`\n- Controversy: `{oCont}` -> `{oCont+contAdd if oCont+contAdd <=10 else 10}`"'
+else:
+    returnstr += f' -f "Totals:|\n- Earnings: `{ogp}` -> `{coincount+ogp}` gp\n- Fame: `{oFame}` -> `{oFame+fameAdd if oFame+fameAdd <=30 else 30}`\n- Controversy: `{oCont}` -> `{oCont+contAdd if oCont+contAdd <=10 else 10}`"'
+
+return returnstr
+</drac2>
+-footer "!fame [withhelp] [madv] [padv] [eadv] [-mb #] [-pb #] [-eb #] [-rr #] | Written by Stellumine#5554"

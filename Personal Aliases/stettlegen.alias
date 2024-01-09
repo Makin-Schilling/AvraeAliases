@@ -1,0 +1,123 @@
+tembed -title "**Random Settlement Generator**" -thumb <image> -color <color>
+<drac2>
+# Written by Stellumine
+
+#set gvar and split them
+gvarOptions = get_gvar("00b0a196-0969-494d-84e6-aacd4f37b4df")
+splitOptions = [x.split("\n") for x in gvarOptions.split("\n\n")]
+
+# set split options
+sizeOption = splitOptions[0]
+climateOption = splitOptions[1]
+genExports = splitOptions[2:6]
+tempExports = splitOptions[6:10]
+tropExports = splitOptions[10:14]
+aridExports = splitOptions[14:18]
+tundExports = splitOptions[18:22]
+coasExports = splitOptions[22:]
+climExOptions = []
+
+#set Primary Variables
+args=&ARGS&
+pargs, returnstr = argparse(args),  f''
+size, climate = '' , ''
+
+#**Logic starts here**
+
+returnstr += f' -f "Random Settlement|'
+
+#work out size and climate
+returnstr += f'**Size:** '
+if pargs.get("size"): #if size is provided
+    sizeInput = str(pargs.get("size")[0])
+    matchingSizes = [sizes for sizes in sizeOption if sizeInput.lower() in sizes.lower()]
+    matchingSizes[0] if len(matchingSizes) > 0 else err("Invalid Size - See `!help randsettle`")
+    size = matchingSizes[0]
+
+    returnstr += f'{size}\n'
+else: #if size is not provided
+    sizeDice = "d"+str(len(sizeOption))
+    sizeNum = vroll(sizeDice)
+    size = sizeOption[sizeNum.total-1]
+    returnstr += f'{sizeNum.dice} = {size}\n'
+
+returnstr += f'**Climate:** '
+if pargs.get("climate"): #if climate is provided
+    climInput = str(pargs.get("climate")[0])
+    matchingClim = [climates for climates in climateOption if climInput.lower() in climates.lower()]
+    matchingClim[0] if len(matchingClim) > 0 else err("Invalid Climate - See `!help randsettle`")
+    climate = matchingClim[0]
+
+    returnstr += f'{climate}\n'
+else: #if climate is not provided
+    climDice = "d"+str(len(climateOption))
+    climNum = vroll(climDice)
+    climate = climateOption[climNum.total-1]
+
+    returnstr += f'{climNum.dice} = {climate}\n'
+
+returnstr += f'"'
+
+#determine exports based on size and climate
+if climate == 'Temperate':
+    climExOptions = tempExports
+elif climate == 'Tropical':
+    climExOptions = tropExports
+elif climate == 'Arid':
+    climExOptions = aridExports
+elif climate == 'Tundra':
+    climExOptions = tundExports
+elif climate == 'Coastal':
+    climExOptions = coasExports
+else:
+    climExOptions = genExports
+
+
+farmAmount = 0
+artAmount = 0
+buildAmount = 0
+luxAmount = 0
+returnstr += f' -f "Exports|'
+
+if size == 'Village': # 1-2 Exports
+    farmAmount = roll('1d2')
+elif size == 'Town': # 2-4 Exports
+    farmAmount = roll('1d2')
+    artAmount = roll('1d2-1')
+    buildAmount = 1
+else: # 3-7 Exports
+    farmAmount = roll('1d2')
+    artAmount = roll('1d2')
+    buildAmount = roll('1d3-1')
+    luxAmount = 1
+
+for x in range(farmAmount):
+    exLength = len(climExOptions[0])
+    exportRoll = vroll("d"+str(exLength))
+    exportStr = str(climExOptions[0][exportRoll.total-1])
+    returnstr += f'{exportStr}\n'
+    climExOptions[0].remove(exportStr)
+for x in range(artAmount):
+    exLength = len(climExOptions[1])
+    exportRoll = vroll("d"+str(exLength))
+    exportStr = str(climExOptions[1][exportRoll.total-1])
+    returnstr += f'{exportStr}\n'
+    climExOptions[1].remove(exportStr)
+for x in range(buildAmount):
+    exLength = len(climExOptions[2])
+    exportRoll = vroll("d"+str(exLength))
+    exportStr = str(climExOptions[2][exportRoll.total-1])
+    returnstr += f'{exportStr}\n'
+    climExOptions[2].remove(exportStr)
+for x in range(luxAmount):
+    exLength = len(climExOptions[3])
+    exportRoll = vroll("d"+str(exLength))
+    exportStr = str(climExOptions[3][exportRoll.total-1])
+    returnstr += f'{exportStr}\n'
+    climExOptions[3].remove(exportStr)
+
+returnstr += f'"'
+
+return returnstr
+</drac2>
+-footer "!randsettle [-size] [-climate]| Written by @Stellumine"
