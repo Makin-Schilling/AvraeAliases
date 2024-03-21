@@ -1,0 +1,55 @@
+tembed -title "**{{name}} Rages**" -thumb <image> -color <color>
+<drac2>
+# Written by @Stellumine
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+target = combat().get_combatant(str(pargs.get("t")[0])) if pargs.get("t") else combat().me
+
+# starting return string output
+returnstr += f' -desc "In battle, you fight with primal ferocity. On your turn, you can enter a rage as a bonus action. While raging, you gain the following benefits if you aren\'t wearing heavy armor:\n- You have advantage on Strength checks and Strength saving throws.\n- When you make a melee weapon attack using Strength, you gain a bonus to the damage roll that increases as you gain levels as a barbarian, as shown in the Rage Damage column of the Barbarian table.\n- You have resistance to bludgeoning, piercing, and slashing damage.\n- If you are able to cast spells, you can\'t cast them or concentrate on them while raging."'
+
+if pargs.get("end"): # remove init effect from target
+    returnstr += f' -f "{target.name} ends their Rage|"'
+elif me.cc_exists("Rage") or pargs.get("i"): # add init effect to target
+    if me.get_cc("Rage") > 0 or pargs.get("i"):
+        barbLevel = me.levels.get("Barbarian", 0)
+        exDamage = 2 if barbLevel < 9 else 3 if barbLevel < 16 else 4
+        rounds = 10 if not pargs.get("persist") else 100
+        effectStr = "Rage [" + str(rounds) + " rounds]  (Save Advantage: Strength; Resistance: bludgeoning, piercing, slashing; Check Advantage: Strength; Damage Bonus: " + str(exDamage)
+        extraEffects = {
+            "damage_bonus": str(exDamage),
+            "resistances": ["bludgeoning", "piercing", "slashing"],
+            "check_adv": ["strength"],
+            "save_adv": ["strength"]
+        }
+        if pargs.get("steel"):
+            extraEffects["ac_bonus"] = exDamage
+            effectStr += "; AC Bonus: " + str(exDamage)
+        effectStr += ")"
+
+        target.add_effect("Rage", duration=rounds, passive_effects = extraEffects)
+        effect = target.get_effect("Rage")
+
+        if pargs.get("bear"):
+            tHPDice = "1d12+" + str(me.skills.constitution.value)
+            tHP = vroll(tHPDice)
+            target.set_temp_hp(tHP.total)
+            returnstr += f' -f "{target.name}|`{effectStr}`\n{tHP.full} Temp HP"'
+            returnstr += f' -f "{target.name} HP|{target.hp_str()}"'
+        else:
+            returnstr += f' -f "{target.name}|`{effectStr}`"'
+        if not pargs.get("i"):
+            me.mod_cc("Rage", -1)
+            returnstr += f' -f "Rages (-1)|{me.cc_str("Rage")}"'
+
+    else: # not enough rage counters
+        returnstr += f' -f "Cannot Rage|Not enough rage counters remaining"'
+
+else: # has no rage cc
+    returnstr += f' -f "Cannot Rage|No rage CC"'
+
+return returnstr
+</drac2>
+-footer "!rage [-t] [-i] [end] [persist] [bear] [steel] | Written by Stellumine"
