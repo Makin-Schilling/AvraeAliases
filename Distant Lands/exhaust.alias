@@ -8,7 +8,7 @@ pargs, returnstr, me, cc, change = argparse(&ARGS&),  f'', character(), "Exhaust
 eGvar = load_json(get_gvar("500ee8db-effc-434d-9062-7040a200f482"))
 
 # CC creation
-me.create_cc_nx(cc,0,6,None,"bubble", None, None, None, None, 0)
+me.create_cc_nx(cc,0,6,"long","bubble", None, -1, None, None, 0)
 if pargs.get("clear"):
     change = 0 - me.get_cc(cc)
     me.set_cc(cc, 0)

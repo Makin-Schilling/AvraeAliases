@@ -1,4 +1,4 @@
-tembed -title "**{{name}} is Recovering from Exhaustion**" -thumb <image> -color <color>
+tembed -title "**{{name}} gets a burst of Adrenaline**" -thumb <image> -color <color>
 <drac2>
 # Written by @Stellumine
 
@@ -8,16 +8,24 @@ pargs, returnstr, me, cc, change = argparse(&ARGS&),  f'', character(), "Exhaust
 eGvar = load_json(get_gvar("500ee8db-effc-434d-9062-7040a200f482"))
 
 # CC creation
-me.create_cc_nx(cc,0,6,None,"bubble", None, None, None, None, 0)
-startLevel = me.get_cc(cc)
-me.mod_cc(cc, -1)
-change = me.get_cc(cc) - startLevel 
+me.create_cc_nx(cc,0,6,"long","bubble", None, -1, None, None, 0)
+me.mod_cc(cc, +1)
+change = 1
+
+# Setting Temp HP
+tempHP = me.stats.prof_bonus*2
+me.set_temp_hp(tempHP)
 
 # starting return string output
-eOutput = eGvar[me.get_cc(cc) - 1] if me.get_cc(cc) > 0 else "You are not exhausted."
-returnstr += f' -f "Exhausion{" (-1)" if change < 0 else ""}|{me.cc_str(cc)}"'
-returnstr += f' -f "Level {me.get_cc(cc)}|{eOutput}"'
+returnstr += f' -desc "Whenever you take the Attack Action you gain advantage on all attack rolls you make until the end of your turn, and gain temporary hit points equal to Twice your proficiency bonus. \nAfter using this feature you gain 1 level of exhaustion, if you have any other levels of exhaustion while using this feature you can ignore them but suffer the same penalties after using this feature."'
+returnstr += f' -f "{name}\'s Temp HP (+{tempHP})|{me.hp_str()}"'
+eOutput = eGvar[me.get_cc(cc) - 1]
+returnstr += f' -f "Exhausion (+1)|{me.cc_str(cc)}"'
+returnstr += f' -f "Exhaustion Level {me.get_cc(cc)}|{eOutput}"'
+
+me.set_temp_hp(me.stats.prof_bonus*2)
 
 return returnstr
 </drac2>
--footer "!exhaust [clear] [-n #]| Written by Stellumine"
+-footer "!adrenaline | Written by Stellumine"
+

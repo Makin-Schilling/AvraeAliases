@@ -4,13 +4,20 @@ tembed -title "**{{name}} is Recovering from Exhaustion**" -thumb <image> -color
 
 # Setting Primary Variables
 args=&ARGS&
-pargs, returnstr, me, cc, change = argparse(&ARGS&),  f'', character(), "Exhaustion", 0
+pargs, returnstr, me, cc, change, cc2 = argparse(&ARGS&),  f'', character(), "Exhaustion", 0, "Recovery"
 eGvar = load_json(get_gvar("500ee8db-effc-434d-9062-7040a200f482"))
 
 # CC creation
-me.create_cc_nx(cc,0,6,None,"bubble", None, None, None, None, 0)
+me.create_cc_nx(cc,0,6,"long","bubble", None, -1, None, None, 0) #exhaustion
+me.create_cc_nx(cc2,0,2,"long","bubble", None, None, None, None, 2) #recovery
+
 startLevel = me.get_cc(cc)
-me.mod_cc(cc, -1)
+if me.get_cc(cc2) > 0 and me.get_cc(cc) > 0:
+    me.mod_cc(cc, -1)
+    me.mod_cc(cc2, -1)
+    returnstr += f' -f "Recovery (-1)|{me.cc_str(cc2)}"'
+elif me.get_cc(cc) <= 0:
+    returnstr += f' -f "Recovery|No need to Recover"'
 change = me.get_cc(cc) - startLevel 
 
 # starting return string output
@@ -20,4 +27,4 @@ returnstr += f' -f "Level {me.get_cc(cc)}|{eOutput}"'
 
 return returnstr
 </drac2>
--footer "!exhaust [clear] [-n #]| Written by Stellumine"
+-footer "!recovery | Written by Stellumine"
