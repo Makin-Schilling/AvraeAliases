@@ -1,0 +1,29 @@
+tembed -title "**{{name}} is Exhausted**" -thumb <image> -color <color>
+<drac2>
+# Written by @Stellumine
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me, cc, change = argparse(&ARGS&),  f'', character(), "Exhaustion", 0
+eGvar = load_json(get_gvar("500ee8db-effc-434d-9062-7040a200f482"))
+
+# CC creation
+me.create_cc_nx(cc,0,6,None,"bubble", None, None, None, None, 0)
+if pargs.get("clear"):
+    change = 0 - me.get_cc(cc)
+    me.set_cc(cc, 0)
+elif pargs.get("n"):
+    change = int(pargs.get("n")[0]) - me.get_cc(cc)
+    me.set_cc(cc, int(pargs.get("n")[0]))
+else:
+    change = 1
+    me.mod_cc(cc, +1)
+
+# starting return string output
+eOutput = eGvar[me.get_cc(cc) - 1] if me.get_cc(cc) > 0 else "You are not exhausted."
+returnstr += f' -f "Exhausion ({"+" if change > 0 else ""}{change})|{me.cc_str(cc)}"'
+returnstr += f' -f "Level {me.get_cc(cc)}|{eOutput}"'
+
+return returnstr
+</drac2>
+-footer "!exhaust [clear] [-n #]| Written by Stellumine"
