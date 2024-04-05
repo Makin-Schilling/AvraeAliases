@@ -1,0 +1,50 @@
+<drac2>
+spellList = load_yaml(get_gvar("7226e680-f21b-43f2-a08a-3065190109e8"))
+args = &ARGS&
+pargs, me, cc, returnstr = argparse(args), character(), "Exhaustion", f''
+DC = 0
+spellbook = me.spellbook.spells
+spellLevel = 0
+me.create_cc_nx(cc,0,6,"long","bubble", None, -1, None, None, 0)
+if  pargs.get("l") or pargs.get("level"):
+    spellLevel = int(pargs.get("level")[0]) if pargs.get("level") else int(pargs.get("l")[0])
+    DC = 13+spellLevel
+else:
+    sList1 = []
+    for spell in spellbook:
+        if str(args[0]).lower() in spell.name.lower():
+            sList1.append(spell)
+
+    if len(sList1) > 0 :
+        spellCast = sList1[0]
+        sList2 = []
+        for spellName in spellList:
+            if spellCast.name.lower() in spellName.name.lower():
+                sList2.append(spellName)
+        spell = sList2[0]
+        spellLevel = spell.level
+        DC = 13+spellLevel
+    else:
+        returnstr += f' -f "Spell not Found in Spellbook|Exhaustion was not added"'
+
+returnstr += f' -f "Soulcasting|When a caster attempts to cast a spell without expending a spell slot, they must make a Constitution Saving Throw (DC of 13 + Spell level ({DC}))\nOn a failure, the caster suffers a number of levels of exhaustion equal to 1d4+1.\nOn a success, the caster suffers 1 level of exhaustion.\nThe highest level spell that can be cast this way is 5th level, and this can only be done to cast spells of a level you can cast. If you have any other levels of exhaustion while using this feature you can ignore them but suffer the same penalties after using this feature"'
+
+if spellLevel > 5:
+    returnstr += f' -f "Spell Level is too high to Soulcast|Exhaustion was not added"'
+elif DC != 0:
+    returnstr += f' -i '
+    saveDice = "1d20+" + str(me.saves.get("con").value)
+    saveRoll = vroll(saveDice)
+    if saveRoll.total >= DC:
+        returnstr += f' -f "{name} Saved (DC{DC})|{saveRoll.full}"'
+        me.mod_cc(cc, 1)
+        returnstr += f' -f "{cc}(+1)|{me.cc_str(cc)}"'
+    else:
+        exRoll = vroll("1d4+1")
+        returnstr += f' -f "{name} Failed (DC{DC})|{saveRoll.full}"'
+        returnstr += f' -f "Exhaustion Roll|{exRoll.full}"'
+        me.mod_cc(cc, exRoll.total)
+        returnstr += f' -f "{cc}(+{exRoll.total})|{me.cc_str(cc)}"'
+
+return returnstr
+</drac2>
