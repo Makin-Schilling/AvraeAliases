@@ -1,0 +1,116 @@
+tembed -title "**Work DT**" -thumb <image> -color <color>
+<drac2>
+# Written by @Stellumine
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+level = me.levels.total_level
+tier = 4 if level >= 17 else 3 if level >= 11 else 2 if level >= 5 else 1
+DC = 25 if tier == 4 else 20 if tier == 3 else 16 if tier == 2 else 13
+
+# Setting Modding Variables
+coincount = 0
+
+# Setting Rolls
+defroll, advroll, disroll, realRoll = "1d20+","2d20kh1+", "2d20kl1+", ""
+
+# Start Making Output Pretty
+returnstr += f'-f "{name} is Working|For working and maintaining a profession you can make a check and gain gold."'
+
+# Checking for required arg
+if len(args) < 1 or (args[0] != "free" and args[0] != "spec"):
+    err("Specify either `free` or `spec` to do Freelancing or Specialized work.")
+elif args[0] == "free":
+
+    # Setting Skills
+    skill = max(me.skills.athletics.value, me.skills.acrobatics.value, me.skills.performance.value)
+
+    # Setting Skill Bonuses
+    workBonus = str(skill)
+    b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+
+    returnstr += f' -f "Freelancing Roll|'
+
+    # Set up Work Roll
+    if pargs.get("adv"):
+        realRoll = advroll
+    elif pargs.get("dis"):
+        realRoll = disroll
+    else:
+        realRoll = defroll
+    workRoll = vroll(realRoll+workBonus+b)
+
+    # Check Passes and Output Results
+    returnstr += f'{workRoll.full}\n'
+    coinType = ""
+    if workRoll.total >= DC+10:
+        coincount += 378 if tier == 4 else 126 if tier == 3 else 42 if tier == 2 else 14
+        coinType = "gp"
+        returnstr += f'**CRIT SUCCESS**\n'
+    elif workRoll.total >= DC:
+        coincount += 189 if tier == 4 else 63 if tier == 3 else 21 if tier == 2 else 7
+        coinType = "gp"
+    elif workRoll.total >= DC-10:
+        coincount += 112 if tier == 4 else 56 if tier == 3 else 28 if tier == 2 else 14
+        coinType = "sp"
+    else:
+        coincount += 56 if tier == 4 else 28 if tier == 3 else 14 if tier == 2 else 7
+        coinType = "sp"
+        returnstr += f'**CRIT FAIL**\n'
+
+    returnstr += f'Coins Gained: `{coincount}` {coinType}"'
+
+elif args[0] == "spec":
+
+    # Setting Skills
+    skill = max(me.stats.get_mod("int"), me.stats.get_mod("cha"), me.stats.get_mod("wis"))+me.stats.prof_bonus
+
+    # Setting Skill Bonuses
+    workBonus = str(skill)
+    b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+
+    returnstr += f' -f "Specialized Roll|'
+
+    # Set up Work Roll
+    if pargs.get("adv"):
+        realRoll = advroll
+    elif pargs.get("dis"):
+        realRoll = disroll
+    else:
+        realRoll = defroll
+    workRoll = vroll(realRoll+workBonus+b)
+
+    # Check Passes and Output Results
+    returnstr += f'{workRoll.full}\n'
+    coinType = ""
+    if workRoll.total >= DC+10:
+        coincount += 756 if tier == 4 else 252 if tier == 3 else 84 if tier == 2 else 28
+        coinType = "gp"
+        returnstr += f'**CRIT SUCCESS**\n'
+    elif workRoll.total >= DC:
+        coincount += 378 if tier == 4 else 126 if tier == 3 else 42 if tier == 2 else 14
+        coinType = "gp"
+    elif workRoll.total >= DC-10:
+        coincount += 56 if tier == 4 else 28 if tier == 3 else 14 if tier == 2 else 7
+        coinType = "gp"
+    else:
+        coincount += 112 if tier == 4 else 56 if tier == 3 else 28 if tier == 2 else 14
+        coinType = "sp"
+        returnstr += f'**CRIT FAIL**\n'
+
+    returnstr += f'Coins Gained: `{coincount}` {coinType}"'
+
+
+#Modifies the character coin count
+ocp = me.coinpurse.total # the string of the original coinpurse, for output purposes
+ogp = me.coinpurse[coinType] # grabs original gold count
+me.coinpurse.modify_coins(gp = coincount) if coinType == "gp" else me.coinpurse.modify_coins(sp = coincount) # modifies gp count by the coin count
+
+#Output original and updated coin count 
+returnstr += f' -f "Total Coin Earned|`{coincount}` {coinType}"'
+returnstr += f' -f "Earnings, Added Automatically|`{ocp}` -> `{me.coinpurse.total}` gp"'
+
+return returnstr
+</drac2>
+-footer "!dt work < free/spec > [adv] [dis] [-b #] | Written by Stellumine"

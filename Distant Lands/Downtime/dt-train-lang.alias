@@ -1,0 +1,81 @@
+tembed -title "**Training DT**" -thumb <image> -color <color>
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me, cc = argparse(args[1:]),  f'', character(), "Language Training"
+if len(args) < 1: # Checks to make sure there is at least 1 arguments
+    err("Not enough arguments - See `!help dt-train`")
+
+langOptions = get_gvar("be330edc-e1a9-4701-8f62-a7deab77df27")
+splitLang = [x.split("\n") for x in langOptions.split("\n\n")]
+standLang = splitLang[0]
+uncommonLang = splitLang[1]
+exoticLang = splitLang[2]
+langTrain = ""
+langLevel = 0
+tier = 4 if level >= 17 else 3 if level >= 11 else 2 if level >= 5 else 1
+DC = 25 if tier == 4 else 20 if tier == 3 else 16 if tier == 2 else 13
+trainingCount = 0
+
+for lang in standLang: #set language and language level
+    if args[0].lower() in lang.lower():
+        langTrain = lang
+        langLevel = 1
+        break
+if langLevel == 0:
+    for lang in uncommonLang:
+        if args[0].lower() in lang.lower():
+            langTrain = lang
+            langLevel = 2
+            break
+if langLevel == 0:
+    for lang in exoticLang:
+        if args[0].lower() in lang.lower():
+            langTrain = lang
+            langLevel = 3
+            break
+
+if langLevel == 0: #error out if no correct language
+    err("Invalid Language, please check the list of approved languages")
+else:
+    returnstr += f' -f "{name} is learning a Language|{"Standard" if langLevel == 1 else "Uncommon" if langLevel == 2 else "Exotic"} Language - {langTrain}"'
+# Set CC
+ccMax = 4 if langLevel == 1 else 8
+me.create_cc_nx(cc, 0, ccMax, None, None, None, None, None, None, 0)
+
+# Logic
+
+# Setting Skills
+skill = max(me.skills.intelligence.value, 0)
+
+# Setting Skill Bonuses
+trainBonus = str(skill)
+defroll, advroll, disroll, realRoll = "1d20+","2d20kh1+", "2d20kl1+", ""
+b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+
+# Set up Train Roll
+if pargs.get("adv"):
+    realRoll = advroll
+elif pargs.get("dis"):
+    realRoll = disroll
+else:
+    realRoll = defroll
+trainRoll = vroll(realRoll+trainBonus+b)
+
+if trainRoll.total >= DC:
+    me.mod_cc(cc, 1)
+    trainingCount += 1
+    returnstr += f' -f "Training Roll|**PASSED**\n{trainRoll.full}"'
+    returnstr += f' -f "Training Progress|{me.cc_str(cc)}(+1)"'
+    if me.get_cc(cc) == me.get_cc_max(cc):
+        returnstr += f' -f "Training Complete!|{name} has finished training {langTrain}"'
+        me.delete_cc(cc)
+else:
+    returnstr += f' -f "Training Roll|**FAILED**\n{trainRoll.full}"'
+    returnstr += f' -f "Training Progress|{me.cc_str(cc)}"'
+
+return returnstr
+</drac2>
+-footer "!dt-train lang < language > [-b #] [adv] [dis]| Written by Stellumine#5554"
