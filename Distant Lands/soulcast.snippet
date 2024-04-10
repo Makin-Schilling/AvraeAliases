@@ -40,11 +40,10 @@ elif DC != 0:
         me.mod_cc(cc, 1)
         returnstr += f' -f "{cc}(+1)|{me.cc_str(cc)}"'
     else:
-        exRoll = vroll("1d4+1")
+        exhaust = 3
         returnstr += f' -f "{name} Failed (DC{DC})|{saveRoll.full}"'
-        returnstr += f' -f "Exhaustion Roll|{exRoll.full}"'
-        me.mod_cc(cc, exRoll.total)
-        returnstr += f' -f "{cc}(+{exRoll.total})|{me.cc_str(cc)}"'
+        me.mod_cc(cc, exhaust)
+        returnstr += f' -f "{cc}(+{exhaust})|{me.cc_str(cc)}"'
 
 return returnstr
 </drac2>

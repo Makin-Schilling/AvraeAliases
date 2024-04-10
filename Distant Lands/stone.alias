@@ -1,0 +1,33 @@
+tembed -title "{{name}} uses their Stone's Endurance" -thumb <image> -color <color>
+<drac2>
+#Written by @Stellumine
+
+#Setting Primary Variables
+args = &ARGS&
+pargs, returnstr, me, cc = argparse(args), f'', character(), "Stone's Endurance"
+
+#Starting Output
+returnstr += f' -desc "When you take damage, you can use your reaction to roll a d12. Add your Constitution modifier to the number rolled and reduce the damage by that total"'
+
+#Starting Logic
+if me.cc_exists(cc):
+    if me.get_cc(cc) > 0:
+        reduceStr = "1d12+" + str(me.skills.constitution.value)
+        reduceRoll = vroll(reduceStr)
+        damageTaken = int(pargs.get("d")[0]) if pargs.get("d") else reduceRoll.total
+        damageReduced = reduceRoll.total if reduceRoll.total <= damageTaken else damageTaken
+        me.mod_cc(cc, -1)
+        me.modify_hp(damageReduced, False, False)
+        returnstr += f' -f "Damage Reduced (max of {damageTaken})|{reduceRoll.full}"'
+        returnstr += f' -f "{name}\'s HP|{me.hp_str()}(+{damageReduced})"'
+        returnstr += f' -f "{cc}(-1)|{me.cc_str(cc)}"'
+    else:
+        returnstr += f' -f "Not enough charges|You cannot use the ability until you finish a long rest"'
+
+else:
+    returnstr += f' -f "You don\'t have this ability|You might need to do `!setrace` to create your counters"'
+
+return returnstr
+
+</drac2>
+-footer "!stone [-d #] | Written by Stellumine"
