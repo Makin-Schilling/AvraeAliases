@@ -1,48 +1,48 @@
-tembed -title "**Training DT (Language)**" -thumb <image> -color <color>
+tembed -title "**Training DT (Tools)**" -thumb <image> -color <color>
 <drac2>
 # Written by Stellumine#5554
 
 # Setting Primary Variables
 args=&ARGS&
-pargs, returnstr, me, cc = argparse(args[1:]),  f'', character(), "Language Training"
+pargs, returnstr, me, cc = argparse(args[1:]),  f'', character(), "Tool Training"
 if len(args) < 1: # Checks to make sure there is at least 1 arguments
     err("Not enough arguments - See `!help dt-train`")
 
-langOptions = get_gvar("be330edc-e1a9-4701-8f62-a7deab77df27")
-splitLang = [x.split("\n") for x in langOptions.split("\n\n")]
-standLang = splitLang[0]
-uncommonLang = splitLang[1]
-exoticLang = splitLang[2]
-langTrain = ""
-langLevel = 0
+toolOptions = get_gvar("daa248a5-75d0-4082-beda-2bd4be819846")
+splitTool = [x.split("\n") for x in toolOptions.split("\n\n")]
+standTool = splitTool[0]
+uncommonTool = splitTool[1]
+exoticTool = splitTool[2]
+toolTrain = ""
+toolLevel = 0
 tier = 4 if level >= 17 else 3 if level >= 11 else 2 if level >= 5 else 1
 DC = 25 if tier == 4 else 20 if tier == 3 else 16 if tier == 2 else 13
 trainingCount = 0
 
-for lang in standLang: #set language and language level
-    if args[0].lower() in lang.lower():
-        langTrain = lang
-        langLevel = 1
+for tool in standTool: #set tool and tool level
+    if args[0].lower() in tool.lower():
+        toolTrain = tool
+        toolLevel = 1
         break
-if langLevel == 0:
-    for lang in uncommonLang:
-        if args[0].lower() in lang.lower():
-            langTrain = lang
-            langLevel = 2
+if toolLevel == 0:
+    for tool in uncommonTool:
+        if args[0].lower() in tool.lower():
+            toolTrain = tool
+            toolLevel = 2
             break
-if langLevel == 0:
-    for lang in exoticLang:
-        if args[0].lower() in lang.lower():
-            langTrain = lang
-            langLevel = 3
+if toolLevel == 0:
+    for tool in exoticTool:
+        if args[0].lower() in tool.lower():
+            toolTrain = tool
+            toolLevel = 3
             break
 
-if langLevel == 0: #error out if no correct language
-    err("Invalid Language, please check the list of approved languages")
+if toolLevel == 0: #error out if no correct tool
+    err("Invalid Tool, please check the list of approved tools")
 else:
-    returnstr += f' -f "{name} is learning a Language|{"Standard" if langLevel == 1 else "Uncommon" if langLevel == 2 else "Exotic"} Language - {langTrain}"'
+    returnstr += f' -f "{name} is learning a Tool|{"Standard" if toolLevel == 1 else "Uncommon" if toolLevel == 2 else "Exotic"} Tool - {toolTrain}"'
 # Set CC
-ccMax = 4 if langLevel == 1 else 8
+ccMax = 4 if toolLevel == 1 else 8
 me.create_cc_nx(cc, 0, ccMax, None, None, None, None, None, None, 0)
 
 # Logic
@@ -70,7 +70,7 @@ if trainRoll.total >= DC:
     returnstr += f' -f "Training Roll|**PASSED**\n{trainRoll.full}"'
     returnstr += f' -f "Training Progress|{me.cc_str(cc)}(+1)"'
     if me.get_cc(cc) == me.get_cc_max(cc):
-        returnstr += f' -f "Training Complete!|{name} has finished training {langTrain}"'
+        returnstr += f' -f "Training Complete!|{name} has finished training {toolTrain}"'
         me.delete_cc(cc)
 else:
     returnstr += f' -f "Training Roll|**FAILED**\n{trainRoll.full}"'
@@ -78,4 +78,4 @@ else:
 
 return returnstr
 </drac2>
--footer "!dt-train lang < language > [-b #] [adv] [dis]| Written by Stellumine#5554"
+-footer "!dt-train tool < tool > [-b #] [adv] [dis]| Written by Stellumine#5554"

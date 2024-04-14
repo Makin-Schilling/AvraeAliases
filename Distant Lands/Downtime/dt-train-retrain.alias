@@ -1,0 +1,68 @@
+tembed -title "**Training DT (Retraining)**" -thumb <image> -color <color>
+<drac2>
+# Written by Stellumine#5554
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me, cc = argparse(args[1:]),  f'', character(), "Retraining"
+if len(args) < 1: # Checks to make sure there is at least 1 arguments
+    err("Not enough arguments - See `!help dt-train`")
+
+tier = 4 if level >= 17 else 3 if level >= 11 else 2 if level >= 5 else 1
+DC = 25 if tier == 4 else 20 if tier == 3 else 16 if tier == 2 else 13
+trainingCount = 0
+retrainType = f''
+
+# Set CC
+me.create_cc_nx(cc, 0, 4, None, None, None, None, None, None, 0)
+
+# Logic
+
+if args[0] == "sclass":
+    retrainType =f'Retraining Class/Subclass (Spellcasting)'
+    # Setting Skills
+    skill = (me.skills.arcana.value - me.skills.intelligence.value) + max(me.skills.intelligence.value, me.skills.charisma.value, me.skills.wisdom.value,0)
+elif args[0] == "mclass":
+    retrainType =f'Retraining Class/Subclass (Martial)'
+    # Setting Skills
+    skill = (me.skills.athletics.prof - me.skills.strength.value) + max(me.skills.dexterity.value, me.skills.strength.value,0)
+elif args[0] == "mt":
+    retrainType =f'Retraining Martial Talents'
+    # Setting Skills
+    skill = (me.skills.athletics.prof - me.skills.strength.value) + max(me.skills.dexterity.value, me.skills.strength.value, me.skills.intelligence.value, me.skills.charisma.value, me.skills.wisdom.value,0)
+elif args[0] == "feat":
+    retrainType =f'Retraining Feat'
+    # Setting Skills
+    skill = (me.skills.athletics.prof - me.skills.strength.value) + max(me.skills.dexterity.value, me.skills.strength.value, me.skills.intelligence.value, me.skills.charisma.value, me.skills.wisdom.value,0)
+else:
+    err("didn't specify the type of retraining first. Can either be `sclass`, `mclass`,`mt`, or `feat`")
+
+# Setting Skill Bonuses
+trainBonus = str(skill)
+defroll, advroll, disroll, realRoll = "1d20+","2d20kh1+", "2d20kl1+", ""
+b = "+"+pargs.join('b', '+') if pargs.get("b") else ""
+
+# Set up Train Roll
+if pargs.get("adv"):
+    realRoll = advroll
+elif pargs.get("dis"):
+    realRoll = disroll
+else:
+    realRoll = defroll
+trainRoll = vroll(realRoll+trainBonus+b)
+
+if trainRoll.total >= DC:
+    me.mod_cc(cc, 1)
+    trainingCount += 1
+    returnstr += f' -f "Training Roll ({retrainType})|**PASSED**\n{trainRoll.full}"'
+    returnstr += f' -f "Training Progress|{me.cc_str(cc)}(+1)"'
+    if me.get_cc(cc) == me.get_cc_max(cc):
+        returnstr += f' -f "Training Complete!|{name} has finished {retrainType}"'
+        me.delete_cc(cc)
+else:
+    returnstr += f' -f "Training Roll ({retrainType})|**FAILED**\n{trainRoll.full}"'
+    returnstr += f' -f "Training Progress|{me.cc_str(cc)}"'
+
+return returnstr
+</drac2>
+-footer "!dt-train retrain < retraining type > [-b #] [adv] [dis]| Written by Stellumine#5554"
