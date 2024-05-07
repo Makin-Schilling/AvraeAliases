@@ -1,0 +1,8 @@
+tembed 
+-title "**Training DT**" 
+-thumb <image> 
+-color <color> 
+-desc "There are 3 different types of training in the distant lands server. Use the following help commanjds to see how to use them."
+-f "Language Training|`!help dt-train lang`"
+-f "Tool Training|`!help dt-train tool`"
+-f "Retraining|`!help dt-train retrain`"

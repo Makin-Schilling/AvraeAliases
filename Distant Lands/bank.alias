@@ -1,0 +1,32 @@
+tembed -title "**Weekly XP ({name})**" -thumb <image> -color <color>
+<drac2>
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me, cc = argparse(&ARGS&),  f'', character(), "Weekly XP"
+level = me.levels.total_level
+exp = 4750 if level >= 17 else 2300 if level >= 11 else 1300 if level >= 5 else 400
+
+using( # libraries to use for xp and logging
+    xplib="bd5e6af1-55e9-4c5b-b814-8f9b447091e7",
+    logtools="11743454-0aca-46a6-ad73-9b902a65fbeb",
+)
+
+# CC Creation
+me.create_cc_nx(cc) #create weekly xp cc
+
+# Output start
+returnstr += f' -desc "*Must be on a quest to bank your Weekly XP*"'
+
+if pargs.get("collect")
+    cxp = int(me.get_cvar(cc))
+    me.set_cc(cc, 0)
+    total, removed, added = xplib.modify_xp(cxp, f"Weekly XP: +{cxp}", return_added=True) 
+    returnstr += logtools.display_log_changes(added=added, removed=removed)
+else:
+    returnstr += f' -f "{name} banked their Weekly XP|"'
+    me.mod_cc(cc, +exp)
+
+return returnstr
+</drac2>
+-footer 
