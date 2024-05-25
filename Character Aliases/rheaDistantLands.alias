@@ -1,0 +1,19 @@
+embed
+-title "Rhea's Commands"
+-desc "*Reminder commands for Rhea*"
+-f "__Downtime__|**Work** -`!dt-work free`
+"
+-f "__Skill Commands and Snippets__|
+__Healing Hands__ - `!a healing` (include `-t target` in combat)
+__Radiant Soul__ - `rsoul`
+__Spellstrike__ - `sstrike`
+__Weapon Specialization: Vex__ - `vex`
+__Riposte__ - `riposte`
+__Tactical Assessment__ - `assess` (for checks, not attacks)
+"
+
+-f "__Spell Commands and Snippets__|
+__Electric Wreath__ - `!use wreath` (include `-t target` in combat)
+__Lightning-Charged Blade__ - `lcb`
+"
+-footer "!charStuff rhea"

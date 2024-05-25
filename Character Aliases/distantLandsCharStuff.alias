@@ -1,0 +1,14 @@
+tembed
+-title "Stella's Characters"
+-desc "*Stella's Characters in the Distant Lands Server and various commands and information about them*"
+-f "Active Characters | **Rhea** | *Aasimar - Wizard/Eldritch Knight Fighter*
+`!char Rhea`
+`!charStuff Rhea`
+NPC CODES: `rhea`
+
+**Sholl** | *Goliath - Giant Barbarian*
+`!char Sholl`
+`!charStuff Sholl`
+NPC CODES: `sholl`
+"
+-footer "!charStuff [Character Code]"

@@ -1,0 +1,24 @@
+embed -title "**Weekly XP ({{name}})**" -thumb <image> -color <color>
+<drac2>
+
+# Setting Primary Variables
+args=&ARGS&
+pargs, returnstr, me = argparse(&ARGS&),  f'', character()
+level = me.levels.total_level
+exp = 4750 if level >= 17 else 2300 if level >= 11 else 1300 if level >= 5 else 400
+
+using( # libraries to use for xp and logging
+    xplib="bd5e6af1-55e9-4c5b-b814-8f9b447091e7",
+    logtools="11743454-0aca-46a6-ad73-9b902a65fbeb",
+)
+
+# Output start
+returnstr += f' -desc "*Gaining {exp} XP for {me.name} at level {level}*" '
+
+cxp = exp
+total, removed, added = xplib.modify_xp(cxp, f"Weekly XP: +{cxp}", return_added=True)
+returnstr += logtools.display_log_changes(added=added, removed=removed)[0]
+
+return returnstr
+</drac2>
+-footer "!weekly"

@@ -1,4 +1,4 @@
-tembed -title "**Weekly XP ({name})**" -thumb <image> -color <color>
+embed -title "**Weekly XP ({{name}})**" -thumb <image> -color <color>
 <drac2>
 
 # Setting Primary Variables
@@ -16,17 +16,17 @@ using( # libraries to use for xp and logging
 me.create_cc_nx(cc) #create weekly xp cc
 
 # Output start
-returnstr += f' -desc "*Must be on a quest to bank your Weekly XP*"'
+returnstr += f' -desc "*Must be on a quest to bank your Weekly XP*" '
 
-if pargs.get("collect")
-    cxp = int(me.get_cvar(cc))
+if pargs.get("collect"):
+    wxp = me.get_cc(cc)
     me.set_cc(cc, 0)
-    total, removed, added = xplib.modify_xp(cxp, f"Weekly XP: +{cxp}", return_added=True) 
-    returnstr += logtools.display_log_changes(added=added, removed=removed)
+    total, removed, added = xplib.modify_xp(wxp, f"Weekly XP: +{wxp}", return_added=True) 
+    returnstr += logtools.display_log_changes(added=added, removed=removed)[0]
 else:
-    returnstr += f' -f "{name} banked their Weekly XP|"'
     me.mod_cc(cc, +exp)
+    returnstr += f' -f "{name} banked their Weekly XP|Weekly XP Banked: {me.cc_str(cc)}(+{exp})"'
 
 return returnstr
 </drac2>
--footer 
+-footer "!bank [collect]"
