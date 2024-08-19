@@ -1,6 +1,6 @@
-tembed -title "**{{name}} Rages**" -thumb <image> -color <color>
+embed -title "**{{name}} Rages**" -thumb <image> -color <color>
 <drac2>
-# Written by @Stellumine
+# Written by <@142767245905494016>
 
 # Setting Primary Variables
 args=&ARGS&
@@ -25,10 +25,13 @@ elif me.cc_exists("Rage") or pargs.get("i"): # add init effect to target
             "save_adv": ["strength"]
         }
         if pargs.get("steel"):
-            extraEffects["ac_bonus"] = exDamage
-            effectStr += "; AC Bonus: " + str(exDamage)
+            extraEffects["ac_bonus"] = exDamage - 1
+            effectStr += "; AC Bonus: " + str(exDamage - 1)
+        if pargs.get("invincible"):
+            extraEffects["resistances"] = ["bludgeoning", "piercing", "slashing", "acid", "cold", "fire", "force", "lightning", "necrotic", "poison", "radiant", "thunder"]
+            extraEffects["vulnerabilities"] = ["psychic"]
+            effectStr += "; Extra Resistances: Acid, Cold, Fire, Force, Lightning, Necrotic, Poison, Radiant, Thunder; Vulnerability: Psychic"
         effectStr += ")"
-
         target.add_effect("Rage", duration=rounds, passive_effects = extraEffects)
         effect = target.get_effect("Rage")
 
@@ -52,4 +55,4 @@ else: # has no rage cc
 
 return returnstr
 </drac2>
--footer "!rage [-t] [-i] [end] [persist] [bear] [steel] | Written by Stellumine"
+-footer "!rage [-t] [-i] [end] [persist] [bear] [steel] [invincible] | Written by Stellumine"
